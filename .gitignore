@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data and outputs (optional - uncomment if you don't want to commit these)
+# data/
+# results/
+# test_results/
+# test_correlation_output/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Model checkpoints (keep lightweight_siamese.pth)
+# *.pth
+
+# Large pretrained models directory (keep structure but not all files if too large)
+pretrained/*.pth
+pretrained/*.pkl
+pretrained/*.h5
+
+# SUMo directory (keep if reasonable size, exclude if too large)
+# sumo/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
