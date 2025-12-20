@@ -52,3 +52,4 @@ pretrained/*.h5
 
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints/
+.evidence_store/

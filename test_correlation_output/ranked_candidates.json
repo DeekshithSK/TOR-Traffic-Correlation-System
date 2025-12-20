@@ -1,0 +1,2279 @@
+[
+  {
+    "flow_id": "flow_65",
+    "statistical": 0.9042347752006743,
+    "siamese": 0.7292298674583435,
+    "final": 0.851733302877975,
+    "rank": 1,
+    "guard_identifier": "flow_65",
+    "aggregated_evidence": {
+      "guard_id": "flow_65",
+      "score": 0.9723814643170047,
+      "confidence": 0.7014249582112456,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.606205",
+      "last_seen": "2025-12-15T16:04:50.103994",
+      "evidence_history": [
+        "2025-12-15T16:01:09.606205",
+        "2025-12-15T16:03:55.097376",
+        "2025-12-15T16:04:50.103994"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_91",
+    "statistical": 0.9032457950420505,
+    "siamese": 0.7303988933563232,
+    "final": 0.8513917245363323,
+    "rank": 2,
+    "guard_identifier": "flow_91",
+    "aggregated_evidence": {
+      "guard_id": "flow_91",
+      "score": 1.180824273205413,
+      "confidence": 0.851784661557382,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584280",
+      "last_seen": "2025-12-15T16:04:50.105018",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584280",
+        "2025-12-15T16:03:55.086552",
+        "2025-12-15T16:04:50.105018"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_9",
+    "statistical": 0.9032060487506017,
+    "siamese": 0.7302583456039429,
+    "final": 0.851321737806604,
+    "rank": 3,
+    "guard_identifier": "flow_9",
+    "aggregated_evidence": {
+      "guard_id": "flow_9",
+      "score": 1.076748190015447,
+      "confidence": 0.7767096370107263,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.585877",
+      "last_seen": "2025-12-15T16:04:50.105844",
+      "evidence_history": [
+        "2025-12-15T16:01:09.585877",
+        "2025-12-15T16:03:55.101770",
+        "2025-12-15T16:04:50.105844"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_79",
+    "statistical": 0.902318501499145,
+    "siamese": 0.7300482988357544,
+    "final": 0.8506374407001278,
+    "rank": 4,
+    "guard_identifier": "flow_79",
+    "aggregated_evidence": {
+      "guard_id": "flow_79",
+      "score": 0.9714288666174057,
+      "confidence": 0.7007378042226587,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.591231",
+      "last_seen": "2025-12-15T16:04:50.106493",
+      "evidence_history": [
+        "2025-12-15T16:01:09.591231",
+        "2025-12-15T16:03:55.163857",
+        "2025-12-15T16:04:50.106493"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_62",
+    "statistical": 0.9008412736638627,
+    "siamese": 0.7303458452224731,
+    "final": 0.8496926451314458,
+    "rank": 5,
+    "guard_identifier": "flow_62",
+    "aggregated_evidence": {
+      "guard_id": "flow_62",
+      "score": 0.9722885211136102,
+      "confidence": 0.7013579138619348,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.592417",
+      "last_seen": "2025-12-15T16:04:50.107149",
+      "evidence_history": [
+        "2025-12-15T16:01:09.592417",
+        "2025-12-15T16:03:55.140183",
+        "2025-12-15T16:04:50.107149"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_8",
+    "statistical": 0.9018579291975768,
+    "siamese": 0.7272772789001465,
+    "final": 0.8494837341083477,
+    "rank": 6,
+    "guard_identifier": "flow_8",
+    "aggregated_evidence": {
+      "guard_id": "flow_8",
+      "score": 0.9714258706498514,
+      "confidence": 0.7007356430888921,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.590633",
+      "last_seen": "2025-12-15T16:04:50.107797",
+      "evidence_history": [
+        "2025-12-15T16:01:09.590633",
+        "2025-12-15T16:03:55.159170",
+        "2025-12-15T16:04:50.107797"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_38",
+    "statistical": 0.9013151593763022,
+    "siamese": 0.7284096479415894,
+    "final": 0.8494435059458882,
+    "rank": 7,
+    "guard_identifier": "flow_38",
+    "aggregated_evidence": {
+      "guard_id": "flow_38",
+      "score": 1.0765644226525486,
+      "confidence": 0.776577076879161,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.598423",
+      "last_seen": "2025-12-15T16:04:50.108439",
+      "evidence_history": [
+        "2025-12-15T16:01:09.598423",
+        "2025-12-15T16:03:55.074839",
+        "2025-12-15T16:04:50.108439"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_14",
+    "statistical": 0.9006805827703945,
+    "siamese": 0.7297598123550415,
+    "final": 0.8494043516457886,
+    "rank": 8,
+    "guard_identifier": "flow_14",
+    "aggregated_evidence": {
+      "guard_id": "flow_14",
+      "score": 1.0726689925014248,
+      "confidence": 0.7737671179985831,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.586687",
+      "last_seen": "2025-12-15T16:04:50.109075",
+      "evidence_history": [
+        "2025-12-15T16:01:09.586687",
+        "2025-12-15T16:03:55.159810",
+        "2025-12-15T16:04:50.109075"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_30",
+    "statistical": 0.9008994862852515,
+    "siamese": 0.7283436059951782,
+    "final": 0.8491327221982296,
+    "rank": 9,
+    "guard_identifier": "flow_30",
+    "aggregated_evidence": {
+      "guard_id": "flow_30",
+      "score": 0.9712511651996297,
+      "confidence": 0.7006096197455666,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.592118",
+      "last_seen": "2025-12-15T16:04:50.109820",
+      "evidence_history": [
+        "2025-12-15T16:01:09.592118",
+        "2025-12-15T16:03:55.156607",
+        "2025-12-15T16:04:50.109820"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_16",
+    "statistical": 0.9005211663316905,
+    "siamese": 0.7289461493492126,
+    "final": 0.8490486612369471,
+    "rank": 10,
+    "guard_identifier": "flow_16",
+    "aggregated_evidence": {
+      "guard_id": "flow_16",
+      "score": 0.9721149624550953,
+      "confidence": 0.7012327177539635,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.591523",
+      "last_seen": "2025-12-15T16:04:50.110626",
+      "evidence_history": [
+        "2025-12-15T16:01:09.591523",
+        "2025-12-15T16:03:55.140935",
+        "2025-12-15T16:04:50.110626"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_73",
+    "statistical": 0.899516895215142,
+    "siamese": 0.7292844653129578,
+    "final": 0.8484471662444867,
+    "rank": 11,
+    "guard_identifier": "flow_73",
+    "aggregated_evidence": {
+      "guard_id": "flow_73",
+      "score": 1.0734868785914937,
+      "confidence": 0.7743570981016604,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.583911",
+      "last_seen": "2025-12-15T16:04:50.111605",
+      "evidence_history": [
+        "2025-12-15T16:01:09.583911",
+        "2025-12-15T16:03:55.170324",
+        "2025-12-15T16:04:50.111605"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_80",
+    "statistical": 0.8993303393561178,
+    "siamese": 0.7285372614860535,
+    "final": 0.8480924159950984,
+    "rank": 12,
+    "guard_identifier": "flow_80",
+    "aggregated_evidence": {
+      "guard_id": "flow_80",
+      "score": 0.9650568087546583,
+      "confidence": 0.6961413360832371,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.611455",
+      "last_seen": "2025-12-15T16:04:50.112297",
+      "evidence_history": [
+        "2025-12-15T16:01:09.611455",
+        "2025-12-15T16:03:55.171765",
+        "2025-12-15T16:04:50.112297"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_90",
+    "statistical": 0.8983743964438444,
+    "siamese": 0.729154109954834,
+    "final": 0.8476083104971412,
+    "rank": 13,
+    "guard_identifier": "flow_90",
+    "aggregated_evidence": {
+      "guard_id": "flow_90",
+      "score": 0.9692851236353063,
+      "confidence": 0.6991914205380511,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.613657",
+      "last_seen": "2025-12-15T16:04:50.112963",
+      "evidence_history": [
+        "2025-12-15T16:01:09.613657",
+        "2025-12-15T16:03:55.099900",
+        "2025-12-15T16:04:50.112963"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_95",
+    "statistical": 0.8973423108183738,
+    "siamese": 0.7304433584213257,
+    "final": 0.8472726250992593,
+    "rank": 14,
+    "guard_identifier": "flow_95",
+    "aggregated_evidence": {
+      "guard_id": "flow_95",
+      "score": 0.9722811881954272,
+      "confidence": 0.7013526242795859,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.594421",
+      "last_seen": "2025-12-15T16:04:50.113587",
+      "evidence_history": [
+        "2025-12-15T16:01:09.594421",
+        "2025-12-15T16:03:55.090360",
+        "2025-12-15T16:04:50.113587"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_50",
+    "statistical": 0.8971902839191626,
+    "siamese": 0.7301582098007202,
+    "final": 0.8470806616836298,
+    "rank": 15,
+    "guard_identifier": "flow_50",
+    "aggregated_evidence": {
+      "guard_id": "flow_50",
+      "score": 0.972618094362355,
+      "confidence": 0.7015956507077218,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.588051",
+      "last_seen": "2025-12-15T16:04:50.114238",
+      "evidence_history": [
+        "2025-12-15T16:01:09.588051",
+        "2025-12-15T16:03:55.102386",
+        "2025-12-15T16:04:50.114238"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_41",
+    "statistical": 0.8972797464502902,
+    "siamese": 0.7271994948387146,
+    "final": 0.8462556709668175,
+    "rank": 16,
+    "guard_identifier": "flow_41",
+    "aggregated_evidence": {
+      "guard_id": "flow_41",
+      "score": 0.9696428582741236,
+      "confidence": 0.6994494715327391,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.597438",
+      "last_seen": "2025-12-15T16:04:50.114971",
+      "evidence_history": [
+        "2025-12-15T16:01:09.597438",
+        "2025-12-15T16:03:55.141628",
+        "2025-12-15T16:04:50.114971"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_34",
+    "statistical": 0.895916338265484,
+    "siamese": 0.7303066849708557,
+    "final": 0.8462334422770955,
+    "rank": 17,
+    "guard_identifier": "flow_34",
+    "aggregated_evidence": {
+      "guard_id": "flow_34",
+      "score": 0.9693546564547808,
+      "confidence": 0.6992415778649685,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.588263",
+      "last_seen": "2025-12-15T16:04:50.115637",
+      "evidence_history": [
+        "2025-12-15T16:01:09.588263",
+        "2025-12-15T16:03:55.166508",
+        "2025-12-15T16:04:50.115637"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_85",
+    "statistical": 0.8955805364236582,
+    "siamese": 0.7305691838264465,
+    "final": 0.8460771306444946,
+    "rank": 18,
+    "guard_identifier": "flow_85",
+    "aggregated_evidence": {
+      "guard_id": "flow_85",
+      "score": 0.9706407527094228,
+      "confidence": 0.7001693002093076,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.595236",
+      "last_seen": "2025-12-15T16:04:50.116279",
+      "evidence_history": [
+        "2025-12-15T16:01:09.595236",
+        "2025-12-15T16:03:55.104874",
+        "2025-12-15T16:04:50.116279"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_86",
+    "statistical": 0.8959211114141561,
+    "siamese": 0.7293939590454102,
+    "final": 0.8459629657035322,
+    "rank": 19,
+    "guard_identifier": "flow_86",
+    "aggregated_evidence": {
+      "guard_id": "flow_86",
+      "score": 1.0748730901812706,
+      "confidence": 0.7753570383947573,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.588733",
+      "last_seen": "2025-12-15T16:04:50.116916",
+      "evidence_history": [
+        "2025-12-15T16:01:09.588733",
+        "2025-12-15T16:03:55.080678",
+        "2025-12-15T16:04:50.116916"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_52",
+    "statistical": 0.8958994078175844,
+    "siamese": 0.7293740510940552,
+    "final": 0.8459418008005255,
+    "rank": 20,
+    "guard_identifier": "flow_52",
+    "aggregated_evidence": {
+      "guard_id": "flow_52",
+      "score": 0.9682385609615374,
+      "confidence": 0.6984364851483381,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.607614",
+      "last_seen": "2025-12-15T16:04:50.117553",
+      "evidence_history": [
+        "2025-12-15T16:01:09.607614",
+        "2025-12-15T16:03:55.142306",
+        "2025-12-15T16:04:50.117553"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_46",
+    "statistical": 0.8950069623935182,
+    "siamese": null,
+    "final": 0.6265048736754627,
+    "rank": 21,
+    "guard_identifier": "flow_46",
+    "aggregated_evidence": {
+      "guard_id": "flow_46",
+      "score": 0.8673899615337382,
+      "confidence": 0.6256895980107964,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.619420",
+      "last_seen": "2025-12-15T16:04:50.118183",
+      "evidence_history": [
+        "2025-12-15T16:01:09.619420",
+        "2025-12-15T16:03:55.087763",
+        "2025-12-15T16:04:50.118183"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_99",
+    "statistical": 0.8942760901462004,
+    "siamese": null,
+    "final": 0.6259932631023402,
+    "rank": 22,
+    "guard_identifier": "flow_99",
+    "aggregated_evidence": {
+      "guard_id": "flow_99",
+      "score": 0.8624372418555669,
+      "confidence": 0.622116965951491,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.610863",
+      "last_seen": "2025-12-15T16:04:50.118834",
+      "evidence_history": [
+        "2025-12-15T16:01:09.610863",
+        "2025-12-15T16:03:55.172396",
+        "2025-12-15T16:04:50.118834"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_63",
+    "statistical": 0.8936478434980943,
+    "siamese": null,
+    "final": 0.625553490448666,
+    "rank": 23,
+    "guard_identifier": "flow_63",
+    "aggregated_evidence": {
+      "guard_id": "flow_63",
+      "score": 0.8656008604640163,
+      "confidence": 0.624399034390328,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.617866",
+      "last_seen": "2025-12-15T16:04:50.119455",
+      "evidence_history": [
+        "2025-12-15T16:01:09.617866",
+        "2025-12-15T16:03:55.105492",
+        "2025-12-15T16:04:50.119455"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_28",
+    "statistical": 0.8935970383785385,
+    "siamese": null,
+    "final": 0.625517926864977,
+    "rank": 24,
+    "guard_identifier": "flow_28",
+    "aggregated_evidence": {
+      "guard_id": "flow_28",
+      "score": 0.8708940340398681,
+      "confidence": 0.6282172520245509,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.587436",
+      "last_seen": "2025-12-15T16:04:50.120131",
+      "evidence_history": [
+        "2025-12-15T16:01:09.587436",
+        "2025-12-15T16:03:55.096739",
+        "2025-12-15T16:04:50.120131"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_59",
+    "statistical": 0.8933125931705157,
+    "siamese": null,
+    "final": 0.625318815219361,
+    "rank": 25,
+    "guard_identifier": "flow_59",
+    "aggregated_evidence": {
+      "guard_id": "flow_59",
+      "score": 0.9734960276849182,
+      "confidence": 0.7022289457330683,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.588484",
+      "last_seen": "2025-12-15T16:04:50.120861",
+      "evidence_history": [
+        "2025-12-15T16:01:09.588484",
+        "2025-12-15T16:03:55.077324",
+        "2025-12-15T16:04:50.120861"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_60",
+    "statistical": 0.8932995084447297,
+    "siamese": null,
+    "final": 0.6253096559113107,
+    "rank": 26,
+    "guard_identifier": "flow_60",
+    "aggregated_evidence": {
+      "guard_id": "flow_60",
+      "score": 0.9712008925951315,
+      "confidence": 0.7005733557269656,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.585505",
+      "last_seen": "2025-12-15T16:04:50.121555",
+      "evidence_history": [
+        "2025-12-15T16:01:09.585505",
+        "2025-12-15T16:03:55.152298",
+        "2025-12-15T16:04:50.121555"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_11",
+    "statistical": 0.8931917998798105,
+    "siamese": null,
+    "final": 0.6252342599158672,
+    "rank": 27,
+    "guard_identifier": "flow_11",
+    "aggregated_evidence": {
+      "guard_id": "flow_11",
+      "score": 0.9708101892602933,
+      "confidence": 0.7002915228451506,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.585116",
+      "last_seen": "2025-12-15T16:04:50.122208",
+      "evidence_history": [
+        "2025-12-15T16:01:09.585116",
+        "2025-12-15T16:03:55.158553",
+        "2025-12-15T16:04:50.122208"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_13",
+    "statistical": 0.8931165795174785,
+    "siamese": null,
+    "final": 0.6251816056622349,
+    "rank": 28,
+    "guard_identifier": "flow_13",
+    "aggregated_evidence": {
+      "guard_id": "flow_13",
+      "score": 0.8712592109901887,
+      "confidence": 0.6284806715121881,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.587245",
+      "last_seen": "2025-12-15T16:04:50.122843",
+      "evidence_history": [
+        "2025-12-15T16:01:09.587245",
+        "2025-12-15T16:03:55.088999",
+        "2025-12-15T16:04:50.122843"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_39",
+    "statistical": 0.8930376124605468,
+    "siamese": null,
+    "final": 0.6251263287223827,
+    "rank": 29,
+    "guard_identifier": "flow_39",
+    "aggregated_evidence": {
+      "guard_id": "flow_39",
+      "score": 0.8657070872682029,
+      "confidence": 0.6244756608321327,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.609689",
+      "last_seen": "2025-12-15T16:04:50.123471",
+      "evidence_history": [
+        "2025-12-15T16:01:09.609689",
+        "2025-12-15T16:03:55.145298",
+        "2025-12-15T16:04:50.123471"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_75",
+    "statistical": 0.8929857207217335,
+    "siamese": null,
+    "final": 0.6250900045052135,
+    "rank": 30,
+    "guard_identifier": "flow_75",
+    "aggregated_evidence": {
+      "guard_id": "flow_75",
+      "score": 0.9743964610302701,
+      "confidence": 0.7028784710940634,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.583635",
+      "last_seen": "2025-12-15T16:04:50.124140",
+      "evidence_history": [
+        "2025-12-15T16:01:09.583635",
+        "2025-12-15T16:03:55.106107",
+        "2025-12-15T16:04:50.124140"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_78",
+    "statistical": 0.892668992427708,
+    "siamese": null,
+    "final": 0.6248682946993955,
+    "rank": 31,
+    "guard_identifier": "flow_78",
+    "aggregated_evidence": {
+      "guard_id": "flow_78",
+      "score": 0.8638004449869288,
+      "confidence": 0.623100309150161,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.603191",
+      "last_seen": "2025-12-15T16:04:50.124764",
+      "evidence_history": [
+        "2025-12-15T16:01:09.603191",
+        "2025-12-15T16:03:55.169057",
+        "2025-12-15T16:04:50.124764"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_83",
+    "statistical": 0.8926468786467436,
+    "siamese": null,
+    "final": 0.6248528150527205,
+    "rank": 32,
+    "guard_identifier": "flow_83",
+    "aggregated_evidence": {
+      "guard_id": "flow_83",
+      "score": 0.9710989222765607,
+      "confidence": 0.7004997996905056,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.595864",
+      "last_seen": "2025-12-15T16:04:50.125456",
+      "evidence_history": [
+        "2025-12-15T16:01:09.595864",
+        "2025-12-15T16:03:55.084721",
+        "2025-12-15T16:04:50.125456"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_29",
+    "statistical": 0.892579931752286,
+    "siamese": null,
+    "final": 0.6248059522266002,
+    "rank": 33,
+    "guard_identifier": "flow_29",
+    "aggregated_evidence": {
+      "guard_id": "flow_29",
+      "score": 0.8644712558123168,
+      "confidence": 0.623584196875742,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.610297",
+      "last_seen": "2025-12-15T16:04:50.126100",
+      "evidence_history": [
+        "2025-12-15T16:01:09.610297",
+        "2025-12-15T16:03:55.162611",
+        "2025-12-15T16:04:50.126100"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_68",
+    "statistical": 0.8924901834349059,
+    "siamese": null,
+    "final": 0.6247431284044341,
+    "rank": 34,
+    "guard_identifier": "flow_68",
+    "aggregated_evidence": {
+      "guard_id": "flow_68",
+      "score": 0.9730335018735697,
+      "confidence": 0.7018953038859105,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584392",
+      "last_seen": "2025-12-15T16:04:50.126955",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584392",
+        "2025-12-15T16:03:55.107420",
+        "2025-12-15T16:04:50.126955"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_61",
+    "statistical": 0.8923863490652739,
+    "siamese": null,
+    "final": 0.6246704443456917,
+    "rank": 35,
+    "guard_identifier": "flow_61",
+    "aggregated_evidence": {
+      "guard_id": "flow_61",
+      "score": 0.8656423127432498,
+      "confidence": 0.6244289358891698,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.609158",
+      "last_seen": "2025-12-15T16:04:50.127668",
+      "evidence_history": [
+        "2025-12-15T16:01:09.609158",
+        "2025-12-15T16:03:55.148415",
+        "2025-12-15T16:04:50.127668"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_51",
+    "statistical": 0.892367093791181,
+    "siamese": null,
+    "final": 0.6246569656538267,
+    "rank": 36,
+    "guard_identifier": "flow_51",
+    "aggregated_evidence": {
+      "guard_id": "flow_51",
+      "score": 0.8685593349954965,
+      "confidence": 0.6265331226579094,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.593926",
+      "last_seen": "2025-12-15T16:04:50.128388",
+      "evidence_history": [
+        "2025-12-15T16:01:09.593926",
+        "2025-12-15T16:03:55.103627",
+        "2025-12-15T16:04:50.128388"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_5",
+    "statistical": 0.8921291172451438,
+    "siamese": null,
+    "final": 0.6244903820716006,
+    "rank": 37,
+    "guard_identifier": "flow_5",
+    "aggregated_evidence": {
+      "guard_id": "flow_5",
+      "score": 0.9702904825405944,
+      "confidence": 0.6999166336915374,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.586510",
+      "last_seen": "2025-12-15T16:04:50.129072",
+      "evidence_history": [
+        "2025-12-15T16:01:09.586510",
+        "2025-12-15T16:03:55.155970",
+        "2025-12-15T16:04:50.129072"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_74",
+    "statistical": 0.8919440732455861,
+    "siamese": null,
+    "final": 0.6243608512719102,
+    "rank": 38,
+    "guard_identifier": "flow_74",
+    "aggregated_evidence": {
+      "guard_id": "flow_74",
+      "score": 0.8687393398882662,
+      "confidence": 0.6266629687409767,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.592727",
+      "last_seen": "2025-12-15T16:04:50.129757",
+      "evidence_history": [
+        "2025-12-15T16:01:09.592727",
+        "2025-12-15T16:03:55.104254",
+        "2025-12-15T16:04:50.129757"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_48",
+    "statistical": 0.8917318886058705,
+    "siamese": null,
+    "final": 0.6242123220241093,
+    "rank": 39,
+    "guard_identifier": "flow_48",
+    "aggregated_evidence": {
+      "guard_id": "flow_48",
+      "score": 0.9703138628352741,
+      "confidence": 0.6999334990091319,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.600328",
+      "last_seen": "2025-12-15T16:04:50.130404",
+      "evidence_history": [
+        "2025-12-15T16:01:09.600328",
+        "2025-12-15T16:03:55.081434",
+        "2025-12-15T16:04:50.130404"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_43",
+    "statistical": 0.891478807387156,
+    "siamese": null,
+    "final": 0.6240351651710092,
+    "rank": 40,
+    "guard_identifier": "flow_43",
+    "aggregated_evidence": {
+      "guard_id": "flow_43",
+      "score": 0.8665882441193882,
+      "confidence": 0.6251112811418579,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.597993",
+      "last_seen": "2025-12-15T16:04:50.131051",
+      "evidence_history": [
+        "2025-12-15T16:01:09.597993",
+        "2025-12-15T16:03:55.150396",
+        "2025-12-15T16:04:50.131051"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_55",
+    "statistical": 0.8914349847019722,
+    "siamese": null,
+    "final": 0.6240044892913805,
+    "rank": 41,
+    "guard_identifier": "flow_55",
+    "aggregated_evidence": {
+      "guard_id": "flow_55",
+      "score": 0.8671367361766843,
+      "confidence": 0.6255069345273719,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.590276",
+      "last_seen": "2025-12-15T16:04:50.131685",
+      "evidence_history": [
+        "2025-12-15T16:01:09.590276",
+        "2025-12-15T16:03:55.160473",
+        "2025-12-15T16:04:50.131685"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_71",
+    "statistical": 0.8914327272134404,
+    "siamese": null,
+    "final": 0.6240029090494082,
+    "rank": 42,
+    "guard_identifier": "flow_71",
+    "aggregated_evidence": {
+      "guard_id": "flow_71",
+      "score": 0.8650022352337722,
+      "confidence": 0.6239672175648159,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.620666",
+      "last_seen": "2025-12-15T16:04:50.132388",
+      "evidence_history": [
+        "2025-12-15T16:01:09.620666",
+        "2025-12-15T16:03:55.096094",
+        "2025-12-15T16:04:50.132388"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_2",
+    "statistical": 0.8913715657431216,
+    "siamese": null,
+    "final": 0.6239600960201851,
+    "rank": 43,
+    "guard_identifier": "flow_2",
+    "aggregated_evidence": {
+      "guard_id": "flow_2",
+      "score": 0.8662824446834008,
+      "confidence": 0.624890693476955,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.603670",
+      "last_seen": "2025-12-15T16:04:50.133094",
+      "evidence_history": [
+        "2025-12-15T16:01:09.603670",
+        "2025-12-15T16:03:55.133050",
+        "2025-12-15T16:04:50.133094"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_17",
+    "statistical": 0.8909041827545985,
+    "siamese": null,
+    "final": 0.6236329279282189,
+    "rank": 44,
+    "guard_identifier": "flow_17",
+    "aggregated_evidence": {
+      "guard_id": "flow_17",
+      "score": 0.8711416597502212,
+      "confidence": 0.6283958762167124,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.586873",
+      "last_seen": "2025-12-15T16:04:50.133772",
+      "evidence_history": [
+        "2025-12-15T16:01:09.586873",
+        "2025-12-15T16:03:55.087148",
+        "2025-12-15T16:04:50.133772"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_57",
+    "statistical": 0.8906469683770133,
+    "siamese": null,
+    "final": 0.6234528778639092,
+    "rank": 45,
+    "guard_identifier": "flow_57",
+    "aggregated_evidence": {
+      "guard_id": "flow_57",
+      "score": 1.0752956774250533,
+      "confidence": 0.7756618706552315,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.585730",
+      "last_seen": "2025-12-15T16:04:50.134409",
+      "evidence_history": [
+        "2025-12-15T16:01:09.585730",
+        "2025-12-15T16:03:55.076719",
+        "2025-12-15T16:04:50.134409"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_47",
+    "statistical": 0.8904603819061525,
+    "siamese": null,
+    "final": 0.6233222673343067,
+    "rank": 46,
+    "guard_identifier": "flow_47",
+    "aggregated_evidence": {
+      "guard_id": "flow_47",
+      "score": 0.8651641021265128,
+      "confidence": 0.6240839798465364,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.608129",
+      "last_seen": "2025-12-15T16:04:50.135036",
+      "evidence_history": [
+        "2025-12-15T16:01:09.608129",
+        "2025-12-15T16:03:55.143681",
+        "2025-12-15T16:04:50.135036"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_22",
+    "statistical": 0.8901993910081754,
+    "siamese": null,
+    "final": 0.6231395737057227,
+    "rank": 47,
+    "guard_identifier": "flow_22",
+    "aggregated_evidence": {
+      "guard_id": "flow_22",
+      "score": 0.8649963417934192,
+      "confidence": 0.6239629663462304,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.598960",
+      "last_seen": "2025-12-15T16:04:50.135694",
+      "evidence_history": [
+        "2025-12-15T16:01:09.598960",
+        "2025-12-15T16:03:55.161974",
+        "2025-12-15T16:04:50.135694"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_33",
+    "statistical": 0.8901469654993808,
+    "siamese": null,
+    "final": 0.6231028758495665,
+    "rank": 48,
+    "guard_identifier": "flow_33",
+    "aggregated_evidence": {
+      "guard_id": "flow_33",
+      "score": 0.8660203418295931,
+      "confidence": 0.6247016262332594,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.615292",
+      "last_seen": "2025-12-15T16:04:50.136321",
+      "evidence_history": [
+        "2025-12-15T16:01:09.615292",
+        "2025-12-15T16:03:55.092892",
+        "2025-12-15T16:04:50.136321"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_92",
+    "statistical": 0.8901311632115019,
+    "siamese": null,
+    "final": 0.6230918142480513,
+    "rank": 49,
+    "guard_identifier": "flow_92",
+    "aggregated_evidence": {
+      "guard_id": "flow_92",
+      "score": 0.9713167870941098,
+      "confidence": 0.7006569559364367,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.586033",
+      "last_seen": "2025-12-15T16:04:50.136964",
+      "evidence_history": [
+        "2025-12-15T16:01:09.586033",
+        "2025-12-15T16:03:55.100518",
+        "2025-12-15T16:04:50.136964"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_37",
+    "statistical": 0.889894330189777,
+    "siamese": null,
+    "final": 0.6229260311328438,
+    "rank": 50,
+    "guard_identifier": "flow_37",
+    "aggregated_evidence": {
+      "guard_id": "flow_37",
+      "score": 0.8680516764534123,
+      "confidence": 0.6261669244273445,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.587840",
+      "last_seen": "2025-12-15T16:04:50.137608",
+      "evidence_history": [
+        "2025-12-15T16:01:09.587840",
+        "2025-12-15T16:03:55.146548",
+        "2025-12-15T16:04:50.137608"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_10",
+    "statistical": 0.8898489734130814,
+    "siamese": null,
+    "final": 0.6228942813891569,
+    "rank": 51,
+    "guard_identifier": "flow_10",
+    "aggregated_evidence": {
+      "guard_id": "flow_10",
+      "score": 0.8676969185279945,
+      "confidence": 0.6259110206774863,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.593045",
+      "last_seen": "2025-12-15T16:04:50.138247",
+      "evidence_history": [
+        "2025-12-15T16:01:09.593045",
+        "2025-12-15T16:03:55.106776",
+        "2025-12-15T16:04:50.138247"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_15",
+    "statistical": 0.8896658937132933,
+    "siamese": null,
+    "final": 0.6227661255993052,
+    "rank": 52,
+    "guard_identifier": "flow_15",
+    "aggregated_evidence": {
+      "guard_id": "flow_15",
+      "score": 0.9683716391630282,
+      "confidence": 0.6985324807790088,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.585367",
+      "last_seen": "2025-12-15T16:04:50.138908",
+      "evidence_history": [
+        "2025-12-15T16:01:09.585367",
+        "2025-12-15T16:03:55.167186",
+        "2025-12-15T16:04:50.138908"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_87",
+    "statistical": 0.8895465451859914,
+    "siamese": null,
+    "final": 0.622682581630194,
+    "rank": 53,
+    "guard_identifier": "flow_87",
+    "aggregated_evidence": {
+      "guard_id": "flow_87",
+      "score": 1.075303929026042,
+      "confidence": 0.7756678229271444,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584499",
+      "last_seen": "2025-12-15T16:04:50.139556",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584499",
+        "2025-12-15T16:03:55.079894",
+        "2025-12-15T16:04:50.139556"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_72",
+    "statistical": 0.8891409855782308,
+    "siamese": null,
+    "final": 0.6223986899047615,
+    "rank": 54,
+    "guard_identifier": "flow_72",
+    "aggregated_evidence": {
+      "guard_id": "flow_72",
+      "score": 0.9700338101616827,
+      "confidence": 0.6997314837074429,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.617050",
+      "last_seen": "2025-12-15T16:04:50.140244",
+      "evidence_history": [
+        "2025-12-15T16:01:09.617050",
+        "2025-12-15T16:03:55.073932",
+        "2025-12-15T16:04:50.140244"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_67",
+    "statistical": 0.8888130493325699,
+    "siamese": null,
+    "final": 0.6221691345327989,
+    "rank": 55,
+    "guard_identifier": "flow_67",
+    "aggregated_evidence": {
+      "guard_id": "flow_67",
+      "score": 0.9664362016019108,
+      "confidence": 0.6971363576933216,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.586327",
+      "last_seen": "2025-12-15T16:04:50.140897",
+      "evidence_history": [
+        "2025-12-15T16:01:09.586327",
+        "2025-12-15T16:03:55.171038",
+        "2025-12-15T16:04:50.140897"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_77",
+    "statistical": 0.8887956141449596,
+    "siamese": null,
+    "final": 0.6221569299014716,
+    "rank": 56,
+    "guard_identifier": "flow_77",
+    "aggregated_evidence": {
+      "guard_id": "flow_77",
+      "score": 0.8661121808259202,
+      "confidence": 0.6247678740655401,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.593361",
+      "last_seen": "2025-12-15T16:04:50.141528",
+      "evidence_history": [
+        "2025-12-15T16:01:09.593361",
+        "2025-12-15T16:03:55.157299",
+        "2025-12-15T16:04:50.141528"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_54",
+    "statistical": 0.888688908280574,
+    "siamese": null,
+    "final": 0.6220822357964018,
+    "rank": 57,
+    "guard_identifier": "flow_54",
+    "aggregated_evidence": {
+      "guard_id": "flow_54",
+      "score": 0.8658028512112763,
+      "confidence": 0.6245447399150167,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.600772",
+      "last_seen": "2025-12-15T16:04:50.142164",
+      "evidence_history": [
+        "2025-12-15T16:01:09.600772",
+        "2025-12-15T16:03:55.128411",
+        "2025-12-15T16:04:50.142164"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_81",
+    "statistical": 0.8884092757457469,
+    "siamese": null,
+    "final": 0.6218864930220228,
+    "rank": 58,
+    "guard_identifier": "flow_81",
+    "aggregated_evidence": {
+      "guard_id": "flow_81",
+      "score": 0.8675163895968827,
+      "confidence": 0.6257807965806603,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.599855",
+      "last_seen": "2025-12-15T16:04:50.142809",
+      "evidence_history": [
+        "2025-12-15T16:01:09.599855",
+        "2025-12-15T16:03:55.088368",
+        "2025-12-15T16:04:50.142809"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_64",
+    "statistical": 0.8883629512772118,
+    "siamese": null,
+    "final": 0.6218540658940482,
+    "rank": 59,
+    "guard_identifier": "flow_64",
+    "aggregated_evidence": {
+      "guard_id": "flow_64",
+      "score": 0.9699418286419809,
+      "confidence": 0.6996651330662793,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584057",
+      "last_seen": "2025-12-15T16:04:50.143455",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584057",
+        "2025-12-15T16:03:55.165874",
+        "2025-12-15T16:04:50.143455"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_44",
+    "statistical": 0.888209464108102,
+    "siamese": null,
+    "final": 0.6217466248756713,
+    "rank": 60,
+    "guard_identifier": "flow_44",
+    "aggregated_evidence": {
+      "guard_id": "flow_44",
+      "score": 0.8660864268913662,
+      "confidence": 0.6247492965287079,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.589406",
+      "last_seen": "2025-12-15T16:04:50.144206",
+      "evidence_history": [
+        "2025-12-15T16:01:09.589406",
+        "2025-12-15T16:03:55.163233",
+        "2025-12-15T16:04:50.144206"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_88",
+    "statistical": 0.8879581459497354,
+    "siamese": null,
+    "final": 0.6215707021648148,
+    "rank": 61,
+    "guard_identifier": "flow_88",
+    "aggregated_evidence": {
+      "guard_id": "flow_88",
+      "score": 0.864891605024393,
+      "confidence": 0.6238874147375939,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.616461",
+      "last_seen": "2025-12-15T16:04:50.145093",
+      "evidence_history": [
+        "2025-12-15T16:01:09.616461",
+        "2025-12-15T16:03:55.092250",
+        "2025-12-15T16:04:50.145093"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_94",
+    "statistical": 0.8877297542663651,
+    "siamese": null,
+    "final": 0.6214108279864555,
+    "rank": 62,
+    "guard_identifier": "flow_94",
+    "aggregated_evidence": {
+      "guard_id": "flow_94",
+      "score": 0.9709646368840175,
+      "confidence": 0.7004029332555626,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.589988",
+      "last_seen": "2025-12-15T16:04:50.145902",
+      "evidence_history": [
+        "2025-12-15T16:01:09.589988",
+        "2025-12-15T16:03:55.082132",
+        "2025-12-15T16:04:50.145902"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_82",
+    "statistical": 0.8874417107239823,
+    "siamese": null,
+    "final": 0.6212091975067875,
+    "rank": 63,
+    "guard_identifier": "flow_82",
+    "aggregated_evidence": {
+      "guard_id": "flow_82",
+      "score": 0.9671180202101014,
+      "confidence": 0.6976281858557328,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.622007",
+      "last_seen": "2025-12-15T16:04:50.146597",
+      "evidence_history": [
+        "2025-12-15T16:01:09.622007",
+        "2025-12-15T16:03:55.075489",
+        "2025-12-15T16:04:50.146597"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_26",
+    "statistical": 0.8873034384969618,
+    "siamese": null,
+    "final": 0.6211124069478732,
+    "rank": 64,
+    "guard_identifier": "flow_26",
+    "aggregated_evidence": {
+      "guard_id": "flow_26",
+      "score": 1.074170717549586,
+      "confidence": 0.7748503836384636,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584731",
+      "last_seen": "2025-12-15T16:04:50.147254",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584731",
+        "2025-12-15T16:03:55.082790",
+        "2025-12-15T16:04:50.147254"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_96",
+    "statistical": 0.8871883109013476,
+    "siamese": null,
+    "final": 0.6210318176309433,
+    "rank": 65,
+    "guard_identifier": "flow_96",
+    "aggregated_evidence": {
+      "guard_id": "flow_96",
+      "score": 0.9711048964986335,
+      "confidence": 0.7005041091807843,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584614",
+      "last_seen": "2025-12-15T16:04:50.147902",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584614",
+        "2025-12-15T16:03:55.103024",
+        "2025-12-15T16:04:50.147902"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_1",
+    "statistical": 0.8871394671568291,
+    "siamese": null,
+    "final": 0.6209976270097803,
+    "rank": 66,
+    "guard_identifier": "flow_1",
+    "aggregated_evidence": {
+      "guard_id": "flow_1",
+      "score": 0.8649103977283698,
+      "confidence": 0.62390097080801,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.599418",
+      "last_seen": "2025-12-15T16:04:50.148561",
+      "evidence_history": [
+        "2025-12-15T16:01:09.599418",
+        "2025-12-15T16:03:55.149456",
+        "2025-12-15T16:04:50.148561"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_53",
+    "statistical": 0.8871287989748711,
+    "siamese": null,
+    "final": 0.6209901592824097,
+    "rank": 67,
+    "guard_identifier": "flow_53",
+    "aggregated_evidence": {
+      "guard_id": "flow_53",
+      "score": 0.9708994357559185,
+      "confidence": 0.7003559005834782,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584974",
+      "last_seen": "2025-12-15T16:04:50.149214",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584974",
+        "2025-12-15T16:03:55.101153",
+        "2025-12-15T16:04:50.149214"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_32",
+    "statistical": 0.886919767766424,
+    "siamese": null,
+    "final": 0.6208438374364967,
+    "rank": 68,
+    "guard_identifier": "flow_32",
+    "aggregated_evidence": {
+      "guard_id": "flow_32",
+      "score": 0.864782620237829,
+      "confidence": 0.6238087988320399,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.605261",
+      "last_seen": "2025-12-15T16:04:50.149866",
+      "evidence_history": [
+        "2025-12-15T16:01:09.605261",
+        "2025-12-15T16:03:55.133912",
+        "2025-12-15T16:04:50.149866"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_21",
+    "statistical": 0.8867362363753672,
+    "siamese": null,
+    "final": 0.6207153654627571,
+    "rank": 69,
+    "guard_identifier": "flow_21",
+    "aggregated_evidence": {
+      "guard_id": "flow_21",
+      "score": 0.8640061580271544,
+      "confidence": 0.6232486997416509,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.607138",
+      "last_seen": "2025-12-15T16:04:50.150543",
+      "evidence_history": [
+        "2025-12-15T16:01:09.607138",
+        "2025-12-15T16:03:55.144587",
+        "2025-12-15T16:04:50.150543"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_35",
+    "statistical": 0.8866864408938007,
+    "siamese": null,
+    "final": 0.6206805086256604,
+    "rank": 70,
+    "guard_identifier": "flow_35",
+    "aggregated_evidence": {
+      "guard_id": "flow_35",
+      "score": 1.0747536012362695,
+      "confidence": 0.7752708453405602,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584173",
+      "last_seen": "2025-12-15T16:04:50.151206",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584173",
+        "2025-12-15T16:03:55.085328",
+        "2025-12-15T16:04:50.151206"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_40",
+    "statistical": 0.8861313868930072,
+    "siamese": null,
+    "final": 0.620291970825105,
+    "rank": 71,
+    "guard_identifier": "flow_40",
+    "aggregated_evidence": {
+      "guard_id": "flow_40",
+      "score": 0.8641056196146026,
+      "confidence": 0.6233204461111361,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.602698",
+      "last_seen": "2025-12-15T16:04:50.151849",
+      "evidence_history": [
+        "2025-12-15T16:01:09.602698",
+        "2025-12-15T16:03:55.154619",
+        "2025-12-15T16:04:50.151849"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_93",
+    "statistical": 0.885891703851569,
+    "siamese": null,
+    "final": 0.6201241926960983,
+    "rank": 72,
+    "guard_identifier": "flow_93",
+    "aggregated_evidence": {
+      "guard_id": "flow_93",
+      "score": 0.8644952270306648,
+      "confidence": 0.6236014884546593,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.612574",
+      "last_seen": "2025-12-15T16:04:50.152507",
+      "evidence_history": [
+        "2025-12-15T16:01:09.612574",
+        "2025-12-15T16:03:55.098655",
+        "2025-12-15T16:04:50.152507"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_36",
+    "statistical": 0.8858230260827744,
+    "siamese": null,
+    "final": 0.6200761182579421,
+    "rank": 73,
+    "guard_identifier": "flow_36",
+    "aggregated_evidence": {
+      "guard_id": "flow_36",
+      "score": 0.967909507910643,
+      "confidence": 0.6981991235459808,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.601660",
+      "last_seen": "2025-12-15T16:04:50.153142",
+      "evidence_history": [
+        "2025-12-15T16:01:09.601660",
+        "2025-12-15T16:03:55.085936",
+        "2025-12-15T16:04:50.153142"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_84",
+    "statistical": 0.8858141321569979,
+    "siamese": null,
+    "final": 0.6200698925098985,
+    "rank": 74,
+    "guard_identifier": "flow_84",
+    "aggregated_evidence": {
+      "guard_id": "flow_84",
+      "score": 0.8669369896665111,
+      "confidence": 0.625362847877541,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.594837",
+      "last_seen": "2025-12-15T16:04:50.153770",
+      "evidence_history": [
+        "2025-12-15T16:01:09.594837",
+        "2025-12-15T16:03:55.094210",
+        "2025-12-15T16:04:50.153770"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_12",
+    "statistical": 0.8855030510905502,
+    "siamese": null,
+    "final": 0.619852135763385,
+    "rank": 75,
+    "guard_identifier": "flow_12",
+    "aggregated_evidence": {
+      "guard_id": "flow_12",
+      "score": 0.8653855327214698,
+      "confidence": 0.6242437082571591,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.601217",
+      "last_seen": "2025-12-15T16:04:50.154426",
+      "evidence_history": [
+        "2025-12-15T16:01:09.601217",
+        "2025-12-15T16:03:55.099284",
+        "2025-12-15T16:04:50.154426"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_98",
+    "statistical": 0.8851404929295887,
+    "siamese": null,
+    "final": 0.6195983450507121,
+    "rank": 76,
+    "guard_identifier": "flow_98",
+    "aggregated_evidence": {
+      "guard_id": "flow_98",
+      "score": 0.8634219276852269,
+      "confidence": 0.622827266633133,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.596997",
+      "last_seen": "2025-12-15T16:04:50.155145",
+      "evidence_history": [
+        "2025-12-15T16:01:09.596997",
+        "2025-12-15T16:03:55.164507",
+        "2025-12-15T16:04:50.155145"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_66",
+    "statistical": 0.8851257778406454,
+    "siamese": null,
+    "final": 0.6195880444884517,
+    "rank": 77,
+    "guard_identifier": "flow_66",
+    "aggregated_evidence": {
+      "guard_id": "flow_66",
+      "score": 0.8646519658453874,
+      "confidence": 0.6237145516100169,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.612023",
+      "last_seen": "2025-12-15T16:04:50.155800",
+      "evidence_history": [
+        "2025-12-15T16:01:09.612023",
+        "2025-12-15T16:03:55.093510",
+        "2025-12-15T16:04:50.155800"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_3",
+    "statistical": 0.8847158897514806,
+    "siamese": null,
+    "final": 0.6193011228260364,
+    "rank": 78,
+    "guard_identifier": "flow_3",
+    "aggregated_evidence": {
+      "guard_id": "flow_3",
+      "score": 0.8634698929019607,
+      "confidence": 0.6228618662232915,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.604298",
+      "last_seen": "2025-12-15T16:04:50.156448",
+      "evidence_history": [
+        "2025-12-15T16:01:09.604298",
+        "2025-12-15T16:03:55.153534",
+        "2025-12-15T16:04:50.156448"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_19",
+    "statistical": 0.8847039953285156,
+    "siamese": null,
+    "final": 0.6192927967299608,
+    "rank": 79,
+    "guard_identifier": "flow_19",
+    "aggregated_evidence": {
+      "guard_id": "flow_19",
+      "score": 0.8593064889672895,
+      "confidence": 0.6198586051184076,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.626535",
+      "last_seen": "2025-12-15T16:04:50.157111",
+      "evidence_history": [
+        "2025-12-15T16:01:09.626535",
+        "2025-12-15T16:03:55.089718",
+        "2025-12-15T16:04:50.157111"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_49",
+    "statistical": 0.884065522161539,
+    "siamese": null,
+    "final": 0.6188458655130773,
+    "rank": 80,
+    "guard_identifier": "flow_49",
+    "aggregated_evidence": {
+      "guard_id": "flow_49",
+      "score": 0.9683489049147536,
+      "confidence": 0.6985160814853867,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.596249",
+      "last_seen": "2025-12-15T16:04:50.157786",
+      "evidence_history": [
+        "2025-12-15T16:01:09.596249",
+        "2025-12-15T16:03:55.084085",
+        "2025-12-15T16:04:50.157786"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_20",
+    "statistical": 0.8840613002031048,
+    "siamese": null,
+    "final": 0.6188429101421733,
+    "rank": 81,
+    "guard_identifier": "flow_20",
+    "aggregated_evidence": {
+      "guard_id": "flow_20",
+      "score": 0.9706636177361437,
+      "confidence": 0.7001857938396375,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.584847",
+      "last_seen": "2025-12-15T16:04:50.158422",
+      "evidence_history": [
+        "2025-12-15T16:01:09.584847",
+        "2025-12-15T16:03:55.091636",
+        "2025-12-15T16:04:50.158422"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_45",
+    "statistical": 0.8839348923060546,
+    "siamese": null,
+    "final": 0.6187544246142381,
+    "rank": 82,
+    "guard_identifier": "flow_45",
+    "aggregated_evidence": {
+      "guard_id": "flow_45",
+      "score": 0.8613177486174115,
+      "confidence": 0.6213094222799932,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.605743",
+      "last_seen": "2025-12-15T16:04:50.159073",
+      "evidence_history": [
+        "2025-12-15T16:01:09.605743",
+        "2025-12-15T16:03:55.167815",
+        "2025-12-15T16:04:50.159073"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_58",
+    "statistical": 0.8838979387122532,
+    "siamese": null,
+    "final": 0.6187285570985772,
+    "rank": 83,
+    "guard_identifier": "flow_58",
+    "aggregated_evidence": {
+      "guard_id": "flow_58",
+      "score": 0.8636427867517984,
+      "confidence": 0.6229865827731721,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.606671",
+      "last_seen": "2025-12-15T16:04:50.159712",
+      "evidence_history": [
+        "2025-12-15T16:01:09.606671",
+        "2025-12-15T16:03:55.127369",
+        "2025-12-15T16:04:50.159712"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_31",
+    "statistical": 0.883788798372767,
+    "siamese": null,
+    "final": 0.6186521588609368,
+    "rank": 84,
+    "guard_identifier": "flow_31",
+    "aggregated_evidence": {
+      "guard_id": "flow_31",
+      "score": 0.8671110771620303,
+      "confidence": 0.6254884254607742,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.591821",
+      "last_seen": "2025-12-15T16:04:50.160588",
+      "evidence_history": [
+        "2025-12-15T16:01:09.591821",
+        "2025-12-15T16:03:55.090981",
+        "2025-12-15T16:04:50.160588"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_97",
+    "statistical": 0.8837782546640329,
+    "siamese": null,
+    "final": 0.618644778264823,
+    "rank": 85,
+    "guard_identifier": "flow_97",
+    "aggregated_evidence": {
+      "guard_id": "flow_97",
+      "score": 0.9628690103561375,
+      "confidence": 0.6945631731332318,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.625424",
+      "last_seen": "2025-12-15T16:04:50.161254",
+      "evidence_history": [
+        "2025-12-15T16:01:09.625424",
+        "2025-12-15T16:03:55.079113",
+        "2025-12-15T16:04:50.161254"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_89",
+    "statistical": 0.8829518837695602,
+    "siamese": null,
+    "final": 0.6180663186386921,
+    "rank": 86,
+    "guard_identifier": "flow_89",
+    "aggregated_evidence": {
+      "guard_id": "flow_89",
+      "score": 0.8652584656628681,
+      "confidence": 0.6241520487495067,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.589666",
+      "last_seen": "2025-12-15T16:04:50.162045",
+      "evidence_history": [
+        "2025-12-15T16:01:09.589666",
+        "2025-12-15T16:03:55.155325",
+        "2025-12-15T16:04:50.162045"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_56",
+    "statistical": 0.8827964883185531,
+    "siamese": null,
+    "final": 0.6179575418229871,
+    "rank": 87,
+    "guard_identifier": "flow_56",
+    "aggregated_evidence": {
+      "guard_id": "flow_56",
+      "score": 0.8596339471401927,
+      "confidence": 0.6200948162594807,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.615849",
+      "last_seen": "2025-12-15T16:04:50.162708",
+      "evidence_history": [
+        "2025-12-15T16:01:09.615849",
+        "2025-12-15T16:03:55.168440",
+        "2025-12-15T16:04:50.162708"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_76",
+    "statistical": 0.8826265046677295,
+    "siamese": null,
+    "final": 0.6178385532674107,
+    "rank": 88,
+    "guard_identifier": "flow_76",
+    "aggregated_evidence": {
+      "guard_id": "flow_76",
+      "score": 0.8659511994965248,
+      "confidence": 0.6246517505827429,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.589142",
+      "last_seen": "2025-12-15T16:04:50.163382",
+      "evidence_history": [
+        "2025-12-15T16:01:09.589142",
+        "2025-12-15T16:03:55.115124",
+        "2025-12-15T16:04:50.163382"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_70",
+    "statistical": 0.8824987649973677,
+    "siamese": null,
+    "final": 0.6177491354981574,
+    "rank": 89,
+    "guard_identifier": "flow_70",
+    "aggregated_evidence": {
+      "guard_id": "flow_70",
+      "score": 0.8655113265873431,
+      "confidence": 0.624334449350394,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.596619",
+      "last_seen": "2025-12-15T16:04:50.164021",
+      "evidence_history": [
+        "2025-12-15T16:01:09.596619",
+        "2025-12-15T16:03:55.095059",
+        "2025-12-15T16:04:50.164021"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_7",
+    "statistical": 0.8816977406912645,
+    "siamese": null,
+    "final": 0.6171884184838851,
+    "rank": 90,
+    "guard_identifier": "flow_7",
+    "aggregated_evidence": {
+      "guard_id": "flow_7",
+      "score": 0.9660587974911734,
+      "confidence": 0.6968641181738356,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.613111",
+      "last_seen": "2025-12-15T16:04:50.164664",
+      "evidence_history": [
+        "2025-12-15T16:01:09.613111",
+        "2025-12-15T16:03:55.078517",
+        "2025-12-15T16:04:50.164664"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_18",
+    "statistical": 0.8815619666074888,
+    "siamese": null,
+    "final": 0.6170933766252421,
+    "rank": 91,
+    "guard_identifier": "flow_18",
+    "aggregated_evidence": {
+      "guard_id": "flow_18",
+      "score": 0.9696460441086603,
+      "confidence": 0.6994517696265826,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.590926",
+      "last_seen": "2025-12-15T16:04:50.165310",
+      "evidence_history": [
+        "2025-12-15T16:01:09.590926",
+        "2025-12-15T16:03:55.076110",
+        "2025-12-15T16:04:50.165310"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_23",
+    "statistical": 0.8795999484489494,
+    "siamese": null,
+    "final": 0.6157199639142645,
+    "rank": 92,
+    "guard_identifier": "flow_23",
+    "aggregated_evidence": {
+      "guard_id": "flow_23",
+      "score": 0.8635007909088647,
+      "confidence": 0.6228841544239584,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.587056",
+      "last_seen": "2025-12-15T16:04:50.166013",
+      "evidence_history": [
+        "2025-12-15T16:01:09.587056",
+        "2025-12-15T16:03:55.165215",
+        "2025-12-15T16:04:50.166013"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_27",
+    "statistical": 0.8795102423723113,
+    "siamese": null,
+    "final": 0.6156571696606179,
+    "rank": 93,
+    "guard_identifier": "flow_27",
+    "aggregated_evidence": {
+      "guard_id": "flow_27",
+      "score": 0.9691158444435739,
+      "confidence": 0.6990693114128321,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.587635",
+      "last_seen": "2025-12-15T16:04:50.166749",
+      "evidence_history": [
+        "2025-12-15T16:01:09.587635",
+        "2025-12-15T16:03:55.077920",
+        "2025-12-15T16:04:50.166749"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_25",
+    "statistical": 0.8771153464108228,
+    "siamese": null,
+    "final": 0.613980742487576,
+    "rank": 94,
+    "guard_identifier": "flow_25",
+    "aggregated_evidence": {
+      "guard_id": "flow_25",
+      "score": 0.8609052986820556,
+      "confidence": 0.6210119025418167,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.602115",
+      "last_seen": "2025-12-15T16:04:50.167503",
+      "evidence_history": [
+        "2025-12-15T16:01:09.602115",
+        "2025-12-15T16:03:55.157922",
+        "2025-12-15T16:04:50.167503"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_6",
+    "statistical": 0.8769269388951693,
+    "siamese": null,
+    "final": 0.6138488572266184,
+    "rank": 95,
+    "guard_identifier": "flow_6",
+    "aggregated_evidence": {
+      "guard_id": "flow_6",
+      "score": 0.9633070672843245,
+      "confidence": 0.694879164412193,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.618703",
+      "last_seen": "2025-12-15T16:04:50.168214",
+      "evidence_history": [
+        "2025-12-15T16:01:09.618703",
+        "2025-12-15T16:03:55.083416",
+        "2025-12-15T16:04:50.168214"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_4",
+    "statistical": 0.8765011821703836,
+    "siamese": null,
+    "final": 0.6135508275192685,
+    "rank": 96,
+    "guard_identifier": "flow_4",
+    "aggregated_evidence": {
+      "guard_id": "flow_4",
+      "score": 0.8597873037357188,
+      "confidence": 0.6202054396594072,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.621260",
+      "last_seen": "2025-12-15T16:04:50.168922",
+      "evidence_history": [
+        "2025-12-15T16:01:09.621260",
+        "2025-12-15T16:03:55.098022",
+        "2025-12-15T16:04:50.168922"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_24",
+    "statistical": 0.875427768766601,
+    "siamese": null,
+    "final": 0.6127994381366206,
+    "rank": 97,
+    "guard_identifier": "flow_24",
+    "aggregated_evidence": {
+      "guard_id": "flow_24",
+      "score": 0.8578829603410918,
+      "confidence": 0.6188317462736183,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.604791",
+      "last_seen": "2025-12-15T16:04:50.169573",
+      "evidence_history": [
+        "2025-12-15T16:01:09.604791",
+        "2025-12-15T16:03:55.169673",
+        "2025-12-15T16:04:50.169573"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_69",
+    "statistical": 0.874713638633666,
+    "siamese": null,
+    "final": 0.6122995470435662,
+    "rank": 98,
+    "guard_identifier": "flow_69",
+    "aggregated_evidence": {
+      "guard_id": "flow_69",
+      "score": 0.8600292829511499,
+      "confidence": 0.6203799907664576,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.608615",
+      "last_seen": "2025-12-15T16:04:50.170303",
+      "evidence_history": [
+        "2025-12-15T16:01:09.608615",
+        "2025-12-15T16:03:55.142973",
+        "2025-12-15T16:04:50.170303"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  },
+  {
+    "flow_id": "flow_42",
+    "statistical": 0.872252934946125,
+    "siamese": null,
+    "final": 0.6105770544622875,
+    "rank": 99,
+    "guard_identifier": "flow_42",
+    "aggregated_evidence": {
+      "guard_id": "flow_42",
+      "score": 0.8567549575802952,
+      "confidence": 0.618018064279063,
+      "count": 3,
+      "first_seen": "2025-12-15T16:01:09.620079",
+      "last_seen": "2025-12-15T16:04:50.170950",
+      "evidence_history": [
+        "2025-12-15T16:01:09.620079",
+        "2025-12-15T16:03:55.161301",
+        "2025-12-15T16:04:50.170950"
+      ]
+    },
+    "tor_relay_info": null,
+    "is_known_relay": false
+  }
+]

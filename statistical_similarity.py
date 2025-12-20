@@ -306,6 +306,36 @@ def batch_statistical_similarity(flows: dict,
 
 
 # ============================================================================
+# StatisticalCorrelator Class (for exit_correlation.py compatibility)
+# ============================================================================
+
+class StatisticalCorrelator:
+    """
+    Class wrapper for statistical similarity functions.
+    Used by exit_correlation.py for consistent API.
+    """
+    
+    def __init__(self, weights: Optional[Tuple[float, float, float]] = None):
+        """
+        Args:
+            weights: Optional custom weights (cross_corr, mad, burst)
+        """
+        self.weights = weights or (0.5, 0.3, 0.2)
+    
+    def compute_similarity(self, flow_a: np.ndarray, flow_b: np.ndarray) -> float:
+        """Compute statistical similarity between two flows."""
+        return statistical_similarity(flow_a, flow_b, self.weights)
+    
+    def process_flow(self, flow_array: np.ndarray) -> np.ndarray:
+        """Process raw flow to fixed-length array."""
+        return process_flow(flow_array)
+    
+    def batch_similarity(self, flows: dict, target_flow: np.ndarray) -> dict:
+        """Compute similarity between target and multiple flows."""
+        return batch_statistical_similarity(flows, target_flow, metric='statistical')
+
+
+# ============================================================================
 # Testing and Validation
 # ============================================================================
 

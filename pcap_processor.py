@@ -214,15 +214,38 @@ class PCAPParser:
     
     def _process_packet(self, pkt: Packet):
         """Process single packet and add to appropriate flow."""
-        # Only process IP packets
-        if not pkt.haslayer(IP):
+        # Handle both IPv4 and IPv6 packets
+        from scapy.layers.inet6 import IPv6
+        
+        if pkt.haslayer(IP):
+            ip_layer = pkt[IP]
+            src_ip = ip_layer.src
+            dst_ip = ip_layer.dst
+            ip_version = 4
+        elif pkt.haslayer(IPv6):
+            ip_layer = pkt[IPv6]
+            src_ip = ip_layer.src
+            dst_ip = ip_layer.dst
+            ip_version = 6
+        else:
+            # Skip non-IP packets
             return
         
-        ip_layer = pkt[IP]
-        src_ip = ip_layer.src
-        dst_ip = ip_layer.dst
         timestamp = float(pkt.time)
         size = len(pkt)
+        
+        # Skip loopback/localhost traffic
+        if ip_version == 4:
+            if src_ip.startswith("127.") or src_ip == "localhost":
+                return
+            if dst_ip.startswith("127.") or dst_ip == "localhost":
+                return
+        else:  # IPv6 loopback
+            if src_ip == "::1" or dst_ip == "::1":
+                return
+            # Skip link-local addresses (fe80::)
+            if src_ip.startswith("fe80:") or dst_ip.startswith("fe80:"):
+                return
         
         # Determine protocol and ports
         if pkt.haslayer(TCP):

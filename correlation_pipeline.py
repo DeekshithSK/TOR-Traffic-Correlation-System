@@ -33,6 +33,10 @@ from siamese_model import (
     batch_similarity_with_target,
     get_model_info
 )
+from analysis.entry_node_aggregator import EntryNodeAggregator
+from analysis.ip_lead_generation import generate_ip_leads
+from tor_intel.tor_directory import TorDirectory
+from utils.flow_id_parser import extract_ips_from_flow_id
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,21 +51,27 @@ class CorrelationPipeline:
     """
     
     def __init__(self,
-                 siamese_model_path: str,
+                 siamese_model_path: Optional[str] = None,
                  statistical_weight: float = 0.7,
                  siamese_weight: float = 0.3,
                  top_k_for_siamese: int = 50,
                  device: Optional[str] = None):
         """
-        Initialize correlation pipeline.
+        Initialize correlation pipeline with CERTIFIED ENGINE settings.
         
         Args:
-            siamese_model_path: Path to pretrained Siamese model (.pth)
+            siamese_model_path: IGNORED. Hardcoded to 'lightweight_siamese.pth'.
             statistical_weight: Weight for statistical similarity (default: 0.7)
             siamese_weight: Weight for Siamese similarity (default: 0.3)
             top_k_for_siamese: Number of top candidates for Siamese refinement
             device: Device for Siamese model ('cpu', 'cuda', 'mps', or None)
         """
+        # Hardcoded Security Enforcement
+        CERTIFIED_MODEL_PATH = "lightweight_siamese.pth"
+        
+        if siamese_model_path is not None:
+            logger.info(f"🔒 Security: Ignoring user path '{siamese_model_path}'. Using certified model.")
+            
         self.statistical_weight = statistical_weight
         self.siamese_weight = siamese_weight
         self.top_k = top_k_for_siamese
@@ -76,16 +86,23 @@ class CorrelationPipeline:
             self.statistical_weight = statistical_weight / total
             self.siamese_weight = siamese_weight / total
         
-        # Load Siamese model
-        logger.info(f"Loading Siamese model from {siamese_model_path}")
-        self.siamese_model = load_siamese_model(siamese_model_path, device=device)
+        # Load Certified Siamese model
+        if not Path(CERTIFIED_MODEL_PATH).exists():
+             raise FileNotFoundError(f"CRITICAL: Certified model '{CERTIFIED_MODEL_PATH}' missing!")
+             
+        logger.info(f"Loading Certified Engine from {CERTIFIED_MODEL_PATH}")
+        self.siamese_model = load_siamese_model(CERTIFIED_MODEL_PATH, device=device)
         self.model_info = get_model_info(self.siamese_model)
         
-        logger.info(f"✅ Correlation pipeline initialized")
+        logger.info(f"✅ Correlation pipeline initialized (Forensic Mode)")
         logger.info(f"   Statistical weight: {self.statistical_weight:.1%}")
         logger.info(f"   Siamese weight: {self.siamese_weight:.1%}")
         logger.info(f"   Top-K for Siamese: {self.top_k}")
         logger.info(f"   Model parameters: {self.model_info['total_parameters']:,}")
+        
+        # Initialize Analysis Modules
+        self.entry_aggregator = EntryNodeAggregator()
+        self.tor_directory = TorDirectory()
     
     def load_raw_flows(self,
                        flow_ids: List[str],
@@ -286,9 +303,12 @@ class CorrelationPipeline:
             reverse=True
         )
         
-        # Add rank
+        # Add rank and client_ip
         for i, item in enumerate(ranked, 1):
             item['rank'] = i
+            # Extract client IP from flow_id
+            src_ip, dst_ip = extract_ips_from_flow_id(item['flow_id'])
+            item['client_ip'] = src_ip
         
         return ranked
     
@@ -360,18 +380,58 @@ class CorrelationPipeline:
         # Step 6: Generate final ranking
         ranked_candidates = self.generate_ranking(fused_scores)
         
+        # Step 7: Entry Node Aggregation & TOR Enrichment
+        logger.info("Enriching results with Entry Node Aggregation and TOR Topology...")
+        for candidate in ranked_candidates:
+            flow_id = candidate['flow_id']
+            score = candidate['final']
+            
+            # Retrieve flow metadata to identify potential guard IP
+            # Assuming flow_store has 'src_ip' or similar for entry flows
+            # If not available, we use flow_id as a proxy identifier
+            flow_meta = flow_store.get(flow_id, {})
+            guard_identifier = flow_meta.get('src_ip') or flow_meta.get('client_ip') or flow_id
+            
+            # Update evidence for this guard candidate
+            self.entry_aggregator.update_evidence(guard_identifier, score)
+            
+            # Enrich with Aggregated Evidence
+            candidate['guard_identifier'] = guard_identifier
+            evidence = self.entry_aggregator.get_ranked_guards()
+            # Find evidence for this specific guard
+            guard_evidence = next((e for e in evidence if e['guard_id'] == guard_identifier), None)
+            candidate['aggregated_evidence'] = guard_evidence
+            
+            # Enrich with TOR Directory Data
+            # Try to lookup by IP if it looks like an IP, otherwise simple search
+            relay_info = self.tor_directory.search_relay(guard_identifier)
+            candidate['tor_relay_info'] = relay_info
+            
+            if relay_info:
+                 candidate['is_known_relay'] = True
+                 candidate['relay_role'] = relay_info.get('role', 'Unknown')
+            else:
+                 candidate['is_known_relay'] = False
+        
         duration = (datetime.now() - start_time).total_seconds()
         
         logger.info("=" * 70)
         logger.info("CORRELATION COMPLETE")
         logger.info("=" * 70)
         logger.info(f"Duration: {duration:.2f}s")
-        logger.info(f"Top candidate: {ranked_candidates[0]['flow_id']} "
-                   f"(score: {ranked_candidates[0]['final']:.4f})")
+        if ranked_candidates:
+            logger.info(f"Top candidate: {ranked_candidates[0]['flow_id']} "
+                       f"(score: {ranked_candidates[0]['final']:.4f})")
+        else:
+            logger.warning("No candidates found.")
+        
+        # Generate IP-level leads from ranked candidates
+        ip_leads = generate_ip_leads(ranked_candidates)
         
         return {
             'target_flow_id': target_flow_id,
             'ranked_candidates': ranked_candidates,
+            'ip_leads': ip_leads,
             'statistical_scores': statistical_scores,
             'siamese_scores': siamese_scores,
             'fused_scores': fused_scores,
@@ -486,9 +546,11 @@ if __name__ == "__main__":
     print("=" * 70)
     for candidate in results['ranked_candidates'][:10]:
         print(f"Rank {candidate['rank']}: {candidate['flow_id']}")
+        s_score = candidate.get('siamese')
+        s_str = f"{s_score:.4f}" if s_score is not None else "N/A"
         print(f"  Final: {candidate['final']:.4f} | "
               f"Statistical: {candidate['statistical']:.4f} | "
-              f"Siamese: {candidate['siamese']:.4f if candidate['siamese'] is not None else 'N/A'}")
+              f"Siamese: {s_str}")
     
     # Save results
     print("\nSaving results...")

@@ -59,6 +59,16 @@ TOR_GRAPH_INCLUDE_RELATIONSHIPS = True  # Track relay connections
 
 
 # ============================================================================
+# Tor Consensus & Path Inference Settings
+# ============================================================================
+
+TOR_CONSENSUS_URL = "https://collector.torproject.org/recent/relay-descriptors/consensuses/"
+TOR_CONSENSUS_CACHE_DIR = DATA_DIR / "tor_consensus_cache"
+TOR_CONSENSUS_CACHE_DIR.mkdir(exist_ok=True)
+TOR_CONSENSUS_CACHE_TTL_HOURS = 6  # Cache consensus for 6 hours
+TOR_PATH_SAMPLE_COUNT = 3000  # Default simulation sample count for exit estimation
+
+# ============================================================================
 # PCAP Ingestion Settings
 # ============================================================================
 
@@ -102,11 +112,15 @@ PROXY_SSL_DECRYPT = False     # SSL decryption (requires keys)
 PCAP_OUTPUT_FORMAT = "rector"  # Convert to RECTor inflow/outflow format
 PCAP_CREATE_WINDOWS = True     # Auto-create overlapping windows
 PCAP_WINDOW_PARAMS = {
-    "threshold": 10,
+    "threshold": 2,    # INVESTIGATIVE MODE: lowered from 10 for real Tor guard traffic
     "interval": 5,
     "num_windows": 10,
     "add_num": 2,
 }
+
+# Analysis Mode: 'strict' (lab-grade) or 'investigative' (police-grade)
+# Investigative mode uses relaxed thresholds and soft-fail behavior
+ANALYSIS_MODE = "investigative"
 
 
 # ============================================================================
