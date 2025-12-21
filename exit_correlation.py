@@ -59,37 +59,109 @@ def is_likely_tor_exit(ip: str, isp: str = None) -> tuple:
     Returns:
         (is_likely_tor, confidence_factor, reason)
         - is_likely_tor: True if likely Tor, False if likely cloud/non-Tor
-        - confidence_factor: Multiplier for confidence (1.0 = no change, 0.3 = 70% penalty)
+        - confidence_factor: Multiplier for confidence (1.0 = no change, 0.0 = reject)
         - reason: Explanation string
     """
     ip = str(ip)
     isp_lower = (isp or '').lower()
     
+    # FIRST: Check Tor consensus (authoritative source)
+    is_verified, relay_info = is_verified_tor_exit(ip)
+    if is_verified:
+        nickname = relay_info.get('nickname', 'Unknown') if relay_info else 'Unknown'
+        return (True, 1.0, f"Verified Tor Exit relay: {nickname}")
+    
+    # If not in consensus, check for known cloud infrastructure (hard reject)
+    
     # Check AWS patterns
     if ip.startswith(AWS_IP_PREFIXES):
-        return (False, 0.3, f"AWS IP detected ({ip[:10]}...)")
+        return (False, 0.0, f"AWS IP detected - NOT a Tor exit relay")
     
     # Check GCP patterns
-    if ip.startswith(GCP_IP_PREFIXES) and 'google' in isp_lower:
-        return (False, 0.3, f"GCP IP detected ({ip[:10]}...)")
+    if ip.startswith(GCP_IP_PREFIXES):
+        return (False, 0.0, f"GCP IP detected - NOT a Tor exit relay")
     
     # Check Azure patterns
-    if ip.startswith(AZURE_IP_PREFIXES) and 'microsoft' in isp_lower:
-        return (False, 0.3, f"Azure IP detected ({ip[:10]}...)")
+    if ip.startswith(AZURE_IP_PREFIXES):
+        return (False, 0.0, f"Azure IP detected - NOT a Tor exit relay")
     
-    # Check for known Tor-friendly ISPs
-    for tor_isp in TOR_FRIENDLY_ISPS:
-        if tor_isp in isp_lower:
-            return (True, 1.0, f"Known Tor-friendly ISP: {isp}")
-    
-    # Private IPs - likely exit server (penalty)
+    # Private IPs - destination server (hard reject)
     if ip.startswith(('127.', '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.',
                       '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', 
                       '172.28.', '172.29.', '172.30.', '172.31.')):
-        return (False, 0.2, f"Private IP - destination server, not exit relay")
+        return (False, 0.0, f"Private IP - destination server, not exit relay")
     
-    # Unknown - slight penalty for uncertainty
-    return (None, 0.7, "Unknown ISP - cannot verify Tor exit status")
+    # Check for known Tor-friendly ISPs (soft accept with lower confidence)
+    for tor_isp in TOR_FRIENDLY_ISPS:
+        if tor_isp in isp_lower:
+            return (True, 0.7, f"Known Tor-friendly ISP but not in consensus: {isp}")
+    
+    # Unknown and NOT in consensus - reject for forensic accuracy
+    return (False, 0.0, "Not verified in Tor consensus - cannot use for correlation")
+
+
+# Global Tor consensus client (lazy-loaded)
+_tor_consensus_client = None
+
+
+def _get_tor_consensus():
+    """Get or initialize the Tor consensus client."""
+    global _tor_consensus_client
+    if _tor_consensus_client is None:
+        try:
+            from tor_path_inference import TorConsensusClient
+            _tor_consensus_client = TorConsensusClient()
+            _tor_consensus_client.fetch_consensus()
+            logger.info(f"✓ Tor consensus loaded for exit verification: {_tor_consensus_client.relay_count} relays")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not load Tor consensus: {e}")
+            _tor_consensus_client = False  # Mark as unavailable
+    return _tor_consensus_client if _tor_consensus_client else None
+
+
+def is_verified_tor_exit(ip: str) -> Tuple[bool, Optional[Dict]]:
+    """
+    Check if an IP is a VERIFIED Tor exit relay in the current consensus.
+    
+    This is the authoritative check - if an IP is not in the Tor consensus,
+    it should NOT be used for exit correlation.
+    
+    Args:
+        ip: IP address to check
+        
+    Returns:
+        (is_verified, relay_info)
+        - is_verified: True if IP is a known Tor exit relay
+        - relay_info: Dict with relay metadata or None
+    """
+    consensus = _get_tor_consensus()
+    if not consensus:
+        logger.warning(f"Tor consensus unavailable - cannot verify {ip}")
+        return (False, None)
+    
+    try:
+        relays = consensus.get_relays_by_ip(ip)
+        if relays:
+            relay = relays[0] if isinstance(relays, list) else relays
+            # Check if it has Exit flag
+            flags = relay.flags if hasattr(relay, 'flags') else []
+            if 'Exit' in flags:
+                return (True, {
+                    'nickname': relay.nickname if hasattr(relay, 'nickname') else 'Unknown',
+                    'fingerprint': relay.fingerprint if hasattr(relay, 'fingerprint') else None,
+                    'bandwidth': relay.bandwidth if hasattr(relay, 'bandwidth') else 0,
+                    'flags': flags
+                })
+            else:
+                # In consensus but not an Exit relay
+                logger.debug(f"IP {ip} is a Tor relay but NOT an Exit (flags: {flags})")
+                return (False, None)
+        else:
+            # Not in consensus at all
+            return (False, None)
+    except Exception as e:
+        logger.error(f"Error checking Tor consensus for {ip}: {e}")
+        return (False, None)
 
 
 class ExitFlowExtractor:
@@ -105,11 +177,15 @@ class ExitFlowExtractor:
         """
         Extract flows from exit-side PCAP file.
         
+        IMPORTANT: Only flows involving VERIFIED Tor exit relays from the
+        consensus are included. All other IPs are filtered out for forensic
+        accuracy.
+        
         Args:
             pcap_path: Path to exit PCAP file
             
         Returns:
-            List of flow dictionaries with normalized format
+            List of flow dictionaries with normalized format (Tor exits only)
         """
         try:
             from pcap_processor import PCAPParser
@@ -120,37 +196,58 @@ class ExitFlowExtractor:
                 logger.warning(f"No flows extracted from exit PCAP: {pcap_path}")
                 return []
             
-            # Normalize to correlation format, excluding SSH (port 22) as it's not Tor exit traffic
+            # Normalize to correlation format
+            # Filter to ONLY include flows with verified Tor exit IPs
             normalized_flows = []
             excluded_ssh = 0
+            excluded_non_tor = 0
+            verified_exits = set()
+            rejected_ips = set()
+            
             for flow_id, flow_session in raw_flows.items():
                 # Skip SSH traffic (port 22) - this is admin traffic to the server, not Tor exit
                 if ':22-' in flow_id or flow_id.endswith(':22'):
                     excluded_ssh += 1
                     continue
+                
+                # Extract external IP from flow
+                external_ip = self._extract_external_ip(flow_id)
+                if not external_ip:
+                    continue
+                
+                # CRITICAL: Verify IP is a Tor exit relay
+                is_verified, relay_info = is_verified_tor_exit(external_ip)
+                if not is_verified:
+                    # Log and skip non-Tor IPs
+                    if external_ip not in rejected_ips:
+                        rejected_ips.add(external_ip)
+                        logger.info(f"⚠️ Filtered non-Tor IP: {external_ip} (not in Tor consensus)")
+                    excluded_non_tor += 1
+                    continue
+                
+                # Track verified exit for reporting
+                verified_exits.add(external_ip)
                     
                 normalized = self._normalize_flow(flow_id, flow_session)
                 if normalized.get('packets', 0) > 0:
+                    # Add exit relay metadata
+                    normalized['exit_relay'] = relay_info
                     normalized_flows.append(normalized)
             
             if excluded_ssh > 0:
                 logger.info(f"Excluded {excluded_ssh} SSH flows from exit correlation")
             
-            self.flows = normalized_flows
-            logger.info(f"Extracted {len(normalized_flows)} exit flows from {pcap_path}")
+            if excluded_non_tor > 0:
+                print(f"⚠️ Filtered {excluded_non_tor} flows with non-Tor IPs: {', '.join(sorted(rejected_ips))}")
             
-            # DEBUG: Print all unique exit IPs for debugging
-            unique_ips = set()
-            for flow in normalized_flows:
-                flow_id = flow.get('id', '')
-                parts = flow_id.split('-')[:2]
-                for p in parts:
-                    if ':' in p:
-                        ip = p.split(':')[0]
-                        if not ip.startswith(('127.', '192.168.', '10.', '172.')):
-                            unique_ips.add(ip)
-            if unique_ips:
-                print(f"📊 Exit flows detected from IPs: {', '.join(sorted(unique_ips))}")
+            self.flows = normalized_flows
+            logger.info(f"Extracted {len(normalized_flows)} VERIFIED Tor exit flows from {pcap_path}")
+            
+            # Report verified exits
+            if verified_exits:
+                print(f"✓ Verified Tor exit IPs: {', '.join(sorted(verified_exits))}")
+            else:
+                print(f"⚠️ No verified Tor exit IPs found in PCAP - correlation may be limited")
             
             return normalized_flows
             
@@ -162,6 +259,20 @@ class ExitFlowExtractor:
             import traceback
             traceback.print_exc()
             return []
+    
+    def _extract_external_ip(self, flow_id: str) -> Optional[str]:
+        """Extract the external (non-private) IP from a flow ID."""
+        PRIVATE_PREFIXES = ('127.', '192.168.', '10.', '172.16.', '172.17.', '172.18.', 
+                           '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.',
+                           '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.')
+        
+        parts = flow_id.split('-')[:2]
+        for p in parts:
+            if ':' in p:
+                ip = p.split(':')[0]
+                if not ip.startswith(PRIVATE_PREFIXES):
+                    return ip
+        return None
     
     def _normalize_flow(self, flow_id: str, flow_session) -> Dict:
         """Normalize FlowSession to standard correlation format."""

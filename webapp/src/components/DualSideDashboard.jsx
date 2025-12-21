@@ -1,6 +1,7 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Target, Server, Shield, Activity, CheckCircle, Link, TrendingUp, Database, AlertCircle
+    Target, Server, Shield, Activity, CheckCircle, Link, TrendingUp, Database, AlertCircle, X, User, Info
 } from 'lucide-react';
 
 /**
@@ -8,9 +9,12 @@ import {
  * Displays results when both entry + exit PCAPs are analyzed
  */
 export default function DualSideDashboard({ results }) {
+    const [selectedMatch, setSelectedMatch] = useState(null);
+
     const correlation = results.correlation || {};
     const topFinding = results.top_finding || {};
     const topExits = correlation.top_exit_nodes || [];
+    const guardExitPairs = correlation.guard_exit_pairs || [];
     const ipLeads = results.ip_leads || [];
 
     const isConfirmed = correlation.exit_confirmation || correlation.mode === 'guard+exit_confirmed';
@@ -20,143 +24,569 @@ export default function DualSideDashboard({ results }) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8 py-8 px-6"
+            style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
             {/* Mode Header */}
-            <div className={`panel p-6 border-l-4 ${isConfirmed ? 'border-secure' : 'border-intel'}`}>
-                <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isConfirmed ? 'bg-secure/20' : 'bg-intel/20'}`}>
-                        <Link className={`w-6 h-6 ${isConfirmed ? 'text-secure' : 'text-intel'}`} />
+            <div
+                className={`panel border-l-4 ${isConfirmed ? 'border-secure' : 'border-intel'}`}
+                style={{ padding: '1.5rem' }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div
+                        style={{
+                            width: '3rem',
+                            height: '3rem',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: isConfirmed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'
+                        }}
+                    >
+                        <Link style={{ width: '1.5rem', height: '1.5rem', color: isConfirmed ? '#10b981' : '#3b82f6' }} />
                     </div>
-                    <div className="flex-1">
-                        <h2 className="text-xl font-bold text-white">
+                    <div style={{ flex: 1 }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
                             🔗 Dual-Side PCAP Correlation
                         </h2>
-                        <p className="text-sm text-text-muted mt-1">
+                        <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.25rem' }}>
                             {isConfirmed
                                 ? 'Entry and exit traffic correlated successfully'
                                 : 'Analyzing correlation between entry and exit captures'}
                         </p>
                     </div>
-                    <span className={`px-4 py-2 text-sm font-semibold rounded-full ${isConfirmed ? 'bg-secure/20 text-secure' : 'bg-intel/20 text-intel'}`}>
-                        {isConfirmed ? 'CONFIRMED' : 'ANALYZING'}
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const response = await fetch('http://localhost:8000/api/export-dashboard-report', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            case_id: results.case_id || 'CASE-DEMO',
+                                            analysis_mode: 'guard_exit',
+                                            results: results,
+                                            pcap_hash: results.pcap_hash || null
+                                        })
+                                    });
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `Dual_Side_Report_${results.case_id || 'DEMO'}.pdf`;
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                    } else {
+                                        alert('Report generation failed');
+                                    }
+                                } catch (err) {
+                                    console.error('Export error:', err);
+                                    alert('Failed to export report');
+                                }
+                            }}
+                            style={{
+                                padding: '0.625rem 1.5rem',
+                                fontSize: '0.875rem',
+                                fontWeight: '600',
+                                borderRadius: '0.5rem',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
+                            }}
+                        >
+                            📄 Export Report
+                        </button>
+                        <span
+                            style={{
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.875rem',
+                                fontWeight: '600',
+                                borderRadius: '9999px',
+                                backgroundColor: isConfirmed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                color: isConfirmed ? '#10b981' : '#3b82f6'
+                            }}
+                        >
+                            {isConfirmed ? 'CONFIRMED' : 'ANALYZING'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            {/* Primary Findings Row - 2 Columns */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem' }}>
+
+            {/* Primary Findings Row - Guard -> Wire -> Exits */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 1fr', gap: '1.5rem', alignItems: 'stretch' }}>
 
                 {/* Confirmed Guard Node */}
-                <div className="panel p-6 hover:border-secure/50 transition-colors">
-                    <div className="flex items-center gap-2 mb-5">
-                        <Target className="w-5 h-5 text-secure" />
-                        <h3 className="text-sm font-bold text-text-tertiary uppercase tracking-wider">
+                <div className="panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                        <Target style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
+                        <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                             {isConfirmed ? 'Confirmed Guard Node' : 'Inferred Guard Node'}
                         </h3>
                     </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <span className="text-5xl">{topFinding.flag || '🌐'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                        <span style={{ fontSize: '3rem' }}>{topFinding.flag || '🌐'}</span>
                         <div>
-                            <p className="font-mono text-xl text-white font-semibold">{topFinding.ip || 'Unknown'}</p>
-                            <p className="text-sm text-text-muted mt-1">{topFinding.country || 'Unknown'}</p>
-                            <p className="text-sm text-text-secondary">{topFinding.isp || 'Unknown ISP'}</p>
+                            <p style={{ fontFamily: 'monospace', fontSize: '1.25rem', color: 'white', margin: 0, fontWeight: '600' }}>{topFinding.ip || 'Unknown'}</p>
+                            <p style={{ fontSize: '0.875rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{topFinding.country || 'Unknown'}</p>
+                            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>{topFinding.isp || 'Unknown ISP'}</p>
                         </div>
                     </div>
-                    <div className="mt-5 pt-4 border-t border-ops-border flex items-center justify-between">
-                        <span className="text-sm text-text-tertiary">Confidence</span>
-                        <div className="flex items-center gap-3">
-                            <span className={`text-2xl font-bold ${topFinding.confidence_level === 'High' ? 'text-secure' : 'text-intel'}`}>
+
+                    {/* Origin IP Section */}
+                    {topFinding.origin_ip && (
+                        <div style={{
+                            marginTop: '1rem',
+                            padding: '0.75rem',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderRadius: '0.5rem',
+                            border: '1px solid rgba(245, 158, 11, 0.3)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                <span style={{ fontSize: '1rem' }}>🔍</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#f59e0b', textTransform: 'uppercase' }}>Origin IP Detected</span>
+                            </div>
+                            <p style={{ fontFamily: 'monospace', fontSize: '1.125rem', color: '#f59e0b', margin: 0, fontWeight: '600' }}>
+                                {topFinding.origin_ip}
+                            </p>
+                            <p style={{ fontSize: '0.625rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>
+                                Client connected to guard node
+                            </p>
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Confidence</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: topFinding.confidence_level === 'High' ? '#10b981' : '#3b82f6' }}>
                                 {((topFinding.confidence_score || 0) * 100).toFixed(0)}%
                             </span>
-                            <span className={`text-xs px-3 py-1 rounded-full ${topFinding.confidence_level === 'High' ? 'bg-secure/20 text-secure' : 'bg-intel/20 text-intel'}`}>
+                            <span style={{
+                                fontSize: '0.75rem',
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '9999px',
+                                backgroundColor: topFinding.confidence_level === 'High' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                color: topFinding.confidence_level === 'High' ? '#10b981' : '#3b82f6'
+                            }}>
                                 {topFinding.confidence_level || 'Medium'}
                             </span>
                         </div>
                     </div>
                 </div>
 
+
+
+
+                {/* Wire Connection Visualization - BEHIND cards */}
+                <div style={{ position: 'relative', width: '200px', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 0 }}>
+                    <svg
+                        width="300"
+                        height="300"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        style={{ position: 'absolute', left: '-50px', width: '300px', height: '100%', zIndex: 1, overflow: 'visible' }}
+                    >
+                        <defs>
+                            <linearGradient id="wireGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#3b82f6" />
+                                <stop offset="100%" stopColor="#60a5fa" />
+                            </linearGradient>
+                            <filter id="glow" x="-50%" y="-500%" width="200%" height="1100%">
+                                <feGaussianBlur stdDeviation="1" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        {/* Wire 1: Top */}
+                        <path
+                            d="M 0 60 C 40 60, 50 30, 100 30"
+                            stroke="url(#wireGradient)"
+                            strokeWidth="1.5"
+                            fill="none"
+                            filter="url(#glow)"
+                            strokeLinecap="round"
+                            opacity="0.9"
+                            vectorEffect="non-scaling-stroke"
+                        >
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" />
+                        </path>
+
+                        {/* Wire 2: Upper-Mid */}
+                        <path
+                            d="M 0 60 C 40 60, 50 50, 100 50"
+                            stroke="url(#wireGradient)"
+                            strokeWidth="1.5"
+                            fill="none"
+                            filter="url(#glow)"
+                            strokeLinecap="round"
+                            opacity="0.9"
+                            vectorEffect="non-scaling-stroke"
+                        >
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" begin="0.3s" />
+                        </path>
+
+                        {/* Wire 3: Lower-Mid */}
+                        <path
+                            d="M 0 60 C 40 60, 50 70, 100 70"
+                            stroke="url(#wireGradient)"
+                            strokeWidth="1.5"
+                            fill="none"
+                            filter="url(#glow)"
+                            strokeLinecap="round"
+                            opacity="0.9"
+                            vectorEffect="non-scaling-stroke"
+                        >
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" begin="0.6s" />
+                        </path>
+
+                        {/* Wire 4: Bottom */}
+                        <path
+                            d="M 0 60 C 40 60, 50 90, 100 90"
+                            stroke="url(#wireGradient)"
+                            strokeWidth="1.5"
+                            fill="none"
+                            filter="url(#glow)"
+                            strokeLinecap="round"
+                            opacity="0.9"
+                            vectorEffect="non-scaling-stroke"
+                        >
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" begin="0.9s" />
+                        </path>
+                    </svg>
+                </div>
+
                 {/* Top Exit Nodes */}
-                <div className="panel p-6 hover:border-intel/50 transition-colors">
-                    <div className="flex items-center gap-2 mb-5">
-                        <Server className="w-5 h-5 text-intel" />
-                        <h3 className="text-sm font-bold text-text-tertiary uppercase tracking-wider">Top Exit Nodes</h3>
+                <div className="panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                        <Server style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
+                        <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Top Exit Nodes</h3>
                     </div>
                     {topExits.length > 0 ? (
-                        <div className="space-y-3">
-                            {topExits.slice(0, 3).map((exit, idx) => (
-                                <div key={idx} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${idx === 0 ? 'bg-intel/10 border border-intel/30' : 'bg-surface-elevated/30 hover:bg-surface-elevated/50'}`}>
-                                    <span className="text-2xl">{exit.flag || '🌐'}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-mono text-sm text-white truncate">{exit.ip}</p>
-                                        <p className="text-xs text-text-muted truncate">{exit.country}</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {/* Reorder: show 2nd exit first, then 1st, then rest */}
+                            {[...topExits.slice(0, 3)].sort((a, b) => {
+                                const idxA = topExits.indexOf(a);
+                                const idxB = topExits.indexOf(b);
+                                if (idxA === 0) return 1;
+                                if (idxB === 0) return -1;
+                                return 0;
+                            }).map((exit, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        padding: '0.75rem',
+                                        borderRadius: '0.5rem',
+                                        backgroundColor: 'rgba(255,255,255,0.03)'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.5rem' }}>{exit.flag || '🌐'}</span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exit.ip}</p>
+                                        <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exit.country}</p>
                                     </div>
-                                    {exit.score && (
-                                        <span className="text-sm font-mono font-semibold text-intel">{(exit.score * 100).toFixed(0)}%</span>
-                                    )}
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-32 text-text-muted">
-                            <p className="text-sm">Processing exit data...</p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '8rem', color: '#9ca3af' }}>
+                            <p style={{ fontSize: '0.875rem' }}>Processing exit data...</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* IP Leads Row - Full Width */}
-            <div className="panel p-6">
-                <div className="flex items-center gap-2 mb-5">
-                    <Database className="w-5 h-5 text-amber-400" />
-                    <h3 className="text-sm font-bold text-text-tertiary uppercase tracking-wider">IP Leads</h3>
-                    {ipLeads.length > 0 && (
-                        <span className="ml-auto text-xs px-2 py-1 bg-surface-elevated rounded text-text-muted">{ipLeads.length} candidates</span>
-                    )}
+            {/* Top Guard-Exit Matches Row - Full Width */}
+            <div className="panel" style={{ padding: '1.5rem', position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                    <Link style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
+                    <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Top Guard-Exit Matches</h3>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.625rem', color: '#6b7280' }}>Click for details</span>
                 </div>
-                {ipLeads.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-text-tertiary text-left border-b-2 border-ops-border">
-                                    <th className="pb-3 font-semibold">IP Address</th>
-                                    <th className="pb-3 font-semibold">Country</th>
-                                    <th className="pb-3 font-semibold">ISP</th>
-                                    <th className="pb-3 font-semibold text-right">Score</th>
-                                    <th className="pb-3 font-semibold text-right">Flows</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-ops-border/30">
-                                {ipLeads.slice(0, 5).map((lead, idx) => (
-                                    <tr key={idx} className={`transition-colors ${idx === 0 ? 'bg-secure/5' : 'hover:bg-surface-elevated/30'}`}>
-                                        <td className="py-3 font-mono text-white">{lead.ip}</td>
-                                        <td className="py-3">
-                                            <span className="text-xl mr-2">{lead.flag || '🌐'}</span>
-                                            <span className="text-text-muted">{lead.country}</span>
-                                        </td>
-                                        <td className="py-3 text-text-secondary truncate max-w-[180px]">{lead.isp}</td>
-                                        <td className="py-3 text-right font-semibold text-secure">{((lead.final || 0) * 100).toFixed(0)}%</td>
-                                        <td className="py-3 text-right text-text-muted">{lead.flow_count}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {guardExitPairs.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                        {guardExitPairs.slice(0, 4).map((pair, idx) => (
+                            <div
+                                key={`${pair.guard_ip}-${pair.exit_ip}-${idx}`}
+                                onClick={() => setSelectedMatch(pair)}
+                                style={{
+                                    padding: '1rem',
+                                    borderRadius: '0.75rem',
+                                    backgroundColor: idx === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+                                    border: idx === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.05)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                {/* Guard IP with Flag */}
+                                <div style={{ marginBottom: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                        <Shield style={{ width: '0.875rem', height: '0.875rem', color: '#3b82f6' }} />
+                                        <span style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Guard</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.25rem' }}>{pair.guard_flag || topFinding.flag || '🌐'}</span>
+                                        <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                            {pair.guard_ip}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Arrow */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.25rem' }}>
+                                    ↓
+                                </div>
+
+                                {/* Exit IP with Flag */}
+                                {(() => {
+                                    const exitGeo = topExits.find(e => e.ip === pair.exit_ip) || {};
+                                    return (
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                                <Server style={{ width: '0.875rem', height: '0.875rem', color: '#10b981' }} />
+                                                <span style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Exit</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ fontSize: '1.25rem' }}>{pair.exit_flag || exitGeo.flag || '🌐'}</span>
+                                                <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                                    {pair.exit_ip}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Info hint */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <Info style={{ width: '0.875rem', height: '0.875rem', color: '#6b7280' }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : topExits.length > 0 ? (
+                    /* Fallback to topExits if no guard_exit_pairs */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                        {topExits.slice(0, 4).map((exit, idx) => (
+                            <div
+                                key={idx}
+                                onClick={() => setSelectedMatch({ guard_ip: topFinding.ip, exit_ip: exit.ip, guard_flag: topFinding.flag, exit_flag: exit.flag, origin_ip: topFinding.origin_ip })}
+                                style={{
+                                    padding: '1rem',
+                                    borderRadius: '0.75rem',
+                                    backgroundColor: idx === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+                                    border: idx === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.05)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <div style={{ marginBottom: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                        <Shield style={{ width: '0.875rem', height: '0.875rem', color: '#3b82f6' }} />
+                                        <span style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase' }}>Guard</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.25rem' }}>{topFinding.flag || '🌐'}</span>
+                                        <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                            {topFinding.ip || 'Unknown'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280' }}>↓</div>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                        <Server style={{ width: '0.875rem', height: '0.875rem', color: '#10b981' }} />
+                                        <span style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase' }}>Exit</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.25rem' }}>{exit.flag || '🌐'}</span>
+                                        <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                            {exit.ip}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-text-muted">
-                        <AlertCircle className="w-10 h-10 mb-3 opacity-40" />
-                        <p className="text-sm">No IP leads generated</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: '#9ca3af' }}>
+                        <AlertCircle style={{ width: '2.5rem', height: '2.5rem', marginBottom: '0.75rem', opacity: 0.4 }} />
+                        <p style={{ fontSize: '0.875rem' }}>No guard-exit matches found</p>
                     </div>
                 )}
+
+                {/* Popup Modal for Match Details */}
+                <AnimatePresence>
+                    {selectedMatch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}
+                            onClick={() => setSelectedMatch(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                    backgroundColor: '#1a1a2e',
+                                    borderRadius: '1rem',
+                                    padding: '1.5rem',
+                                    width: '400px',
+                                    maxWidth: '90vw',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                                }}
+                            >
+                                {/* Header */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                    <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
+                                        🔗 Guard-Exit Match Details
+                                    </h3>
+                                    <button
+                                        onClick={() => setSelectedMatch(null)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            padding: '0.25rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <X style={{ width: '1.25rem', height: '1.25rem', color: '#9ca3af' }} />
+                                    </button>
+                                </div>
+
+                                {/* Client Origin - Now First */}
+                                <div style={{
+                                    padding: '1rem',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                    borderRadius: '0.75rem',
+                                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <User style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
+                                        <span style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'uppercase', fontWeight: 'bold' }}>Client Origin (Source)</span>
+                                    </div>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '1.125rem', color: '#f59e0b', margin: 0, fontWeight: '600' }}>
+                                        {selectedMatch.origin_ip || topFinding.origin_ip || 'Unknown'}
+                                    </p>
+                                    <p style={{ fontSize: '0.625rem', color: '#9ca3af', margin: '0.5rem 0 0 0' }}>
+                                        This IP connected to the Tor network
+                                    </p>
+                                </div>
+
+                                {/* Arrow */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.5rem' }}>
+                                    ↓
+                                </div>
+
+                                {/* Guard Node */}
+                                <div style={{
+                                    padding: '1rem',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderRadius: '0.75rem',
+                                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <Shield style={{ width: '1rem', height: '1rem', color: '#3b82f6' }} />
+                                        <span style={{ fontSize: '0.75rem', color: '#3b82f6', textTransform: 'uppercase', fontWeight: 'bold' }}>Guard Node</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <span style={{ fontSize: '2rem' }}>{selectedMatch.guard_flag || topFinding.flag || '🌐'}</span>
+                                        <div>
+                                            <p style={{ fontFamily: 'monospace', fontSize: '1.125rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                                {selectedMatch.guard_ip}
+                                            </p>
+                                            <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>
+                                                {selectedMatch.guard_country || topFinding.country || 'Unknown Location'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Arrow */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.5rem' }}>
+                                    ↓
+                                </div>
+
+                                {/* Exit Node */}
+                                {(() => {
+                                    // Find exit node geo data from topExits array
+                                    const exitGeo = topExits.find(e => e.ip === selectedMatch.exit_ip) || {};
+                                    return (
+                                        <div style={{
+                                            padding: '1rem',
+                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                            borderRadius: '0.75rem',
+                                            border: '1px solid rgba(16, 185, 129, 0.3)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                <Server style={{ width: '1rem', height: '1rem', color: '#10b981' }} />
+                                                <span style={{ fontSize: '0.75rem', color: '#10b981', textTransform: 'uppercase', fontWeight: 'bold' }}>Exit Node</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <span style={{ fontSize: '2rem' }}>{selectedMatch.exit_flag || exitGeo.flag || '🌐'}</span>
+                                                <div>
+                                                    <p style={{ fontFamily: 'monospace', fontSize: '1.125rem', color: 'white', margin: 0, fontWeight: '600' }}>
+                                                        {selectedMatch.exit_ip}
+                                                    </p>
+                                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>
+                                                        {selectedMatch.exit_country || exitGeo.country || 'Unknown Location'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Analysis Summary */}
-            <div className="panel p-5 bg-gradient-to-r from-secure/5 via-intel/5 to-transparent border-t-2 border-ops-cyan/30">
-                <div className="flex items-center gap-4">
-                    <TrendingUp className="w-6 h-6 text-ops-cyan" />
+            <div
+                className="panel"
+                style={{
+                    padding: '1.25rem',
+                    background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05), transparent)',
+                    borderTop: '2px solid rgba(103, 212, 255, 0.3)'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <TrendingUp style={{ width: '1.5rem', height: '1.5rem', color: '#67d4ff' }} />
                     <div>
-                        <p className="text-sm text-text-secondary">
-                            <span className="text-white font-semibold">✓ Dual-Side Analysis Complete:</span>{' '}
+                        <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
+                            <span style={{ color: 'white', fontWeight: '600' }}>✓ Dual-Side Analysis Complete:</span>{' '}
                             {isConfirmed
                                 ? `Successfully correlated entry traffic (Guard: ${topFinding.ip}) with exit traffic. ${correlation.session_count || 1} sessions verified.`
                                 : `Analyzed guard node with ${topFinding.confidence_level || 'Medium'} confidence. Exit correlation ${matchScore > 0 ? 'partially matched' : 'pending'}.`
@@ -165,6 +595,6 @@ export default function DualSideDashboard({ results }) {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </motion.div >
     );
 }

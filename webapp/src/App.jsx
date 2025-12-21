@@ -19,6 +19,8 @@ import NetworkTopology from './components/NetworkTopology'
 import CorrelationModeSwitch from './components/CorrelationModeSwitch'
 import RelayGraph from './components/RelayGraph'
 import SingleSideDashboard from './components/SingleSideDashboard'
+import EntrySideDashboard from './components/EntrySideDashboard'
+import ExitSideDashboard from './components/ExitSideDashboard'
 import DualSideDashboard from './components/DualSideDashboard'
 import { ANALYSIS_STEPS } from './constants/analysisSteps'
 import { ConfidenceMetric } from './components/MetricCard'
@@ -202,7 +204,7 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -20 }}
-              className="space-y-10 max-w-7xl mx-auto"
+              style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', maxWidth: '80rem', margin: '0 auto' }}
             >
               {/* Step Wizard Progress */}
               <StepWizard currentStep="upload" />
@@ -229,10 +231,10 @@ function App() {
               </div>
 
               {/* Main Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
 
                 {/* Left Column: Upload Zone */}
-                <div className="lg:col-span-8 space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                   {/* Case Info */}
                   <GlassCard variant="glow">
@@ -481,8 +483,9 @@ function App() {
                   )}
                 </div>
 
+
                 {/* Right Column: Mode & Protocol */}
-                <div className="lg:col-span-4 space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {/* Correlation Mode Switch */}
                   <GlassCard>
                     <CardBody>
@@ -619,9 +622,12 @@ function App() {
 
               {/* Conditional Dashboard Rendering Based on Analysis Mode */}
               <div style={{ padding: '2rem 1.5rem', marginTop: '1rem' }}>
-                {analysisResults.analysis_mode === 'exit_only' || analysisResults.analysis_mode === 'entry_only' ? (
-                  /* Single-Side PCAP Analysis Dashboard */
-                  <SingleSideDashboard results={analysisResults} />
+                {analysisResults.analysis_mode === 'exit_only' ? (
+                  /* Exit-Side PCAP Analysis Dashboard */
+                  <ExitSideDashboard results={analysisResults} />
+                ) : analysisResults.analysis_mode === 'entry_only' ? (
+                  /* Entry-Side PCAP Analysis Dashboard */
+                  <EntrySideDashboard results={analysisResults} />
                 ) : (
                   /* Dual-Side PCAP Analysis Dashboard */
                   <DualSideDashboard results={analysisResults} />

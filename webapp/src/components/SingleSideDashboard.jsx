@@ -19,61 +19,94 @@ export default function SingleSideDashboard({ results }) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6 py-8 px-6"
+            style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
             {/* Mode Header */}
-            <div className="panel p-4 border-l-4 border-intel">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-intel/20 flex items-center justify-center">
-                        {isExitMode ? <Server className="w-5 h-5 text-intel" /> : <Shield className="w-5 h-5 text-intel" />}
+            <div
+                className="panel"
+                style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div
+                        style={{
+                            width: '2.5rem',
+                            height: '2.5rem',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)'
+                        }}
+                    >
+                        {isExitMode
+                            ? <Server style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
+                            : <Shield style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
+                        }
                     </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-white">
+                    <div style={{ flex: 1 }}>
+                        <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
                             {isExitMode ? '🔍 Exit-Side PCAP Analysis' : '🔍 Entry-Side PCAP Analysis'}
                         </h2>
-                        <p className="text-xs text-text-muted">
+                        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
                             {isExitMode
                                 ? 'Predicting probable guard nodes from exit traffic patterns'
                                 : 'Analyzing entry-side traffic to identify guard node'}
                         </p>
                     </div>
-                    <span className="ml-auto px-3 py-1 bg-intel/20 text-intel text-xs font-semibold rounded-full">
+                    <span
+                        style={{
+                            padding: '0.25rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            borderRadius: '9999px',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            color: '#3b82f6'
+                        }}
+                    >
                         AUTO-DETECTED
                     </span>
                 </div>
             </div>
 
-            {/* Main Grid */}
+            {/* Main Grid - 3 Columns */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
 
                 {/* LEFT: Primary Finding */}
-                <div className="space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                     {/* Probable Guard Nodes (Exit Mode) */}
                     {isExitMode && probableGuards.length > 0 && (
-                        <div className="panel p-5">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Target className="w-4 h-4 text-secure" />
-                                <h3 className="text-xs font-bold text-text-tertiary uppercase">Probable Guard Nodes</h3>
+                        <div className="panel" style={{ padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <Target style={{ width: '1rem', height: '1rem', color: '#10b981' }} />
+                                <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Probable Guard Nodes</h3>
                             </div>
-                            <div className="space-y-3">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                 {probableGuards.slice(0, 3).map((guard, idx) => (
-                                    <div key={idx} className={`p-3 rounded-lg ${idx === 0 ? 'bg-secure/10 border border-secure/30' : 'bg-surface-elevated/50'}`}>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">{guard.flag || '🌐'}</span>
-                                            <div className="flex-1">
-                                                <p className="font-mono text-sm text-white">{guard.ip}</p>
-                                                <p className="text-[10px] text-text-muted">{guard.country} • {guard.isp}</p>
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            padding: '0.75rem',
+                                            borderRadius: '0.5rem',
+                                            backgroundColor: idx === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+                                            border: idx === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : 'none'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <span style={{ fontSize: '1.5rem' }}>{guard.flag || '🌐'}</span>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0 }}>{guard.ip}</p>
+                                                <p style={{ fontSize: '0.625rem', color: '#9ca3af', margin: 0 }}>{guard.country} • {guard.isp}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-lg font-bold text-secure">{(guard.guard_probability * 100).toFixed(0)}%</p>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#10b981', margin: 0 }}>{(guard.guard_probability * 100).toFixed(0)}%</p>
                                                 {guard.in_consensus && (
-                                                    <span className="text-[8px] px-1.5 py-0.5 bg-secure/20 text-secure rounded">TOR CONSENSUS</span>
+                                                    <span style={{ fontSize: '0.5rem', padding: '0.125rem 0.375rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', borderRadius: '0.25rem' }}>TOR CONSENSUS</span>
                                                 )}
                                             </div>
                                         </div>
                                         {guard.reason && (
-                                            <p className="text-[9px] text-amber-400 mt-2">🔬 {guard.reason}</p>
+                                            <p style={{ fontSize: '0.5625rem', color: '#f59e0b', marginTop: '0.5rem' }}>🔬 {guard.reason}</p>
                                         )}
                                     </div>
                                 ))}
@@ -83,23 +116,23 @@ export default function SingleSideDashboard({ results }) {
 
                     {/* Inferred Guard (Entry Mode) */}
                     {!isExitMode && results.top_finding && (
-                        <div className="panel p-5">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Target className="w-4 h-4 text-secure" />
-                                <h3 className="text-xs font-bold text-text-tertiary uppercase">Inferred Guard Node</h3>
+                        <div className="panel" style={{ padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <Target style={{ width: '1rem', height: '1rem', color: '#10b981' }} />
+                                <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Inferred Guard Node</h3>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">{results.top_finding.flag || '🌐'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '2rem' }}>{results.top_finding.flag || '🌐'}</span>
                                 <div>
-                                    <p className="font-mono text-lg text-white">{results.top_finding.ip}</p>
-                                    <p className="text-xs text-text-muted">{results.top_finding.country}</p>
-                                    <p className="text-xs text-text-secondary">{results.top_finding.isp}</p>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '1.125rem', color: 'white', margin: 0 }}>{results.top_finding.ip}</p>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>{results.top_finding.country}</p>
+                                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{results.top_finding.isp}</p>
                                 </div>
                             </div>
-                            <div className="mt-4 pt-3 border-t border-ops-border">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-text-tertiary">Confidence</span>
-                                    <span className="text-lg font-bold text-secure">
+                            <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Confidence</span>
+                                    <span style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#10b981' }}>
                                         {(results.top_finding.confidence_score * 100).toFixed(0)}%
                                     </span>
                                 </div>
@@ -109,60 +142,60 @@ export default function SingleSideDashboard({ results }) {
                 </div>
 
                 {/* CENTER: Exit Nodes / Flow Stats */}
-                <div className="space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                     {/* Detected Exit Nodes */}
-                    <div className="panel p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Server className="w-4 h-4 text-intel" />
-                            <h3 className="text-xs font-bold text-text-tertiary uppercase">
+                    <div className="panel" style={{ padding: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <Server style={{ width: '1rem', height: '1rem', color: '#3b82f6' }} />
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>
                                 {isExitMode ? 'Detected Exit Nodes' : 'Predicted Exit Nodes'}
                             </h3>
                         </div>
                         {topExits.length > 0 ? (
-                            <div className="space-y-2">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {topExits.slice(0, 3).map((exit, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 p-2 bg-surface-elevated/30 rounded">
-                                        <span className="text-lg">{exit.flag || '🌐'}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-mono text-xs text-white truncate">{exit.ip}</p>
-                                            <p className="text-[10px] text-text-muted truncate">{exit.isp}</p>
+                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '0.25rem' }}>
+                                        <span style={{ fontSize: '1.125rem' }}>{exit.flag || '🌐'}</span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exit.ip}</p>
+                                            <p style={{ fontSize: '0.625rem', color: '#9ca3af', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exit.isp}</p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-intel font-semibold">{exit.packet_count} pkts</p>
-                                            {exit.in_consensus && <span className="text-[8px] text-secure">📡</span>}
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: '600', margin: 0 }}>{exit.packet_count} pkts</p>
+                                            {exit.in_consensus && <span style={{ fontSize: '0.5rem', color: '#10b981' }}>📡</span>}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-text-muted">No exit nodes detected</p>
+                            <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No exit nodes detected</p>
                         )}
                     </div>
 
                     {/* Flow Fingerprint */}
                     {isExitMode && (
-                        <div className="panel p-5">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Zap className="w-4 h-4 text-amber-400" />
-                                <h3 className="text-xs font-bold text-text-tertiary uppercase">Flow Fingerprint</h3>
+                        <div className="panel" style={{ padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <Zap style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
+                                <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Flow Fingerprint</h3>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                                <div className="bg-surface-elevated/30 p-2 rounded">
-                                    <p className="text-text-muted">Burst Entropy</p>
-                                    <p className="font-mono text-white">{fingerprint.burst_entropy?.toFixed(3) || 'N/A'}</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>Burst Entropy</p>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0 }}>{fingerprint.burst_entropy?.toFixed(3) || 'N/A'}</p>
                                 </div>
-                                <div className="bg-surface-elevated/30 p-2 rounded">
-                                    <p className="text-text-muted">Micro-gap Avg</p>
-                                    <p className="font-mono text-white">{fingerprint.micro_gap_avg ? `${(fingerprint.micro_gap_avg * 1000).toFixed(2)}ms` : 'N/A'}</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>Micro-gap Avg</p>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0 }}>{fingerprint.micro_gap_avg ? `${(fingerprint.micro_gap_avg * 1000).toFixed(2)}ms` : 'N/A'}</p>
                                 </div>
-                                <div className="bg-surface-elevated/30 p-2 rounded">
-                                    <p className="text-text-muted">Size Var Slope</p>
-                                    <p className="font-mono text-white">{fingerprint.size_variance_slope?.toFixed(2) || 'N/A'}</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>Size Var Slope</p>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0 }}>{fingerprint.size_variance_slope?.toFixed(2) || 'N/A'}</p>
                                 </div>
-                                <div className="bg-surface-elevated/30 p-2 rounded">
-                                    <p className="text-text-muted">Circuit Lifetime</p>
-                                    <p className="font-mono text-white">{fingerprint.circuit_lifetime ? `${fingerprint.circuit_lifetime.toFixed(2)}s` : 'N/A'}</p>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>Circuit Lifetime</p>
+                                    <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'white', margin: 0 }}>{fingerprint.circuit_lifetime ? `${fingerprint.circuit_lifetime.toFixed(2)}s` : 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
@@ -170,45 +203,51 @@ export default function SingleSideDashboard({ results }) {
                 </div>
 
                 {/* RIGHT: Traffic Profile */}
-                <div className="space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                     {/* Traffic Profile */}
-                    <div className="panel p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Activity className="w-4 h-4 text-ops-cyan" />
-                            <h3 className="text-xs font-bold text-text-tertiary uppercase">Traffic Profile</h3>
+                    <div className="panel" style={{ padding: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <Activity style={{ width: '1rem', height: '1rem', color: '#67d4ff' }} />
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Traffic Profile</h3>
                         </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-muted">Total Packets</span>
-                                <span className="font-mono text-white">{flowMetadata.total_packets?.toLocaleString() || 0}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Total Packets</span>
+                                <span style={{ fontFamily: 'monospace', color: 'white' }}>{flowMetadata.total_packets?.toLocaleString() || 0}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-muted">Total Bytes</span>
-                                <span className="font-mono text-white">{flowMetadata.total_bytes ? `${(flowMetadata.total_bytes / 1024).toFixed(1)} KB` : '0 KB'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Total Bytes</span>
+                                <span style={{ fontFamily: 'monospace', color: 'white' }}>{flowMetadata.total_bytes ? `${(flowMetadata.total_bytes / 1024).toFixed(1)} KB` : '0 KB'}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-muted">Flow Count</span>
-                                <span className="font-mono text-white">{flowMetadata.total_flows || 0}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Flow Count</span>
+                                <span style={{ fontFamily: 'monospace', color: 'white' }}>{flowMetadata.total_flows || 0}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-muted">CDN Filtered</span>
-                                <span className="font-mono text-amber-400">{flowMetadata.cdn_filtered || 0}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>CDN Filtered</span>
+                                <span style={{ fontFamily: 'monospace', color: '#f59e0b' }}>{flowMetadata.cdn_filtered || 0}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-muted">Tor Cell Ratio</span>
-                                <span className="font-mono text-secure">{flowMetadata.tor_cell_ratio ? `${(flowMetadata.tor_cell_ratio * 100).toFixed(1)}%` : 'N/A'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Tor Cell Ratio</span>
+                                <span style={{ fontFamily: 'monospace', color: '#10b981' }}>{flowMetadata.tor_cell_ratio ? `${(flowMetadata.tor_cell_ratio * 100).toFixed(1)}%` : 'N/A'}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Analysis Summary */}
-                    <div className="panel p-5 bg-gradient-to-br from-intel/10 to-transparent">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Database className="w-4 h-4 text-intel" />
-                            <h3 className="text-xs font-bold text-text-tertiary uppercase">Analysis Summary</h3>
+                    <div
+                        className="panel"
+                        style={{
+                            padding: '1.25rem',
+                            background: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), transparent)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                            <Database style={{ width: '1rem', height: '1rem', color: '#3b82f6' }} />
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Analysis Summary</h3>
                         </div>
-                        <p className="text-xs text-text-secondary leading-relaxed">
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', lineHeight: '1.5', margin: 0 }}>
                             {isExitMode
                                 ? `Analyzed ${flowMetadata.total_flows || 0} flows from exit-side capture. Predicted ${probableGuards.length} probable guard nodes using flow fingerprinting and Tor consensus correlation.`
                                 : `Analyzed entry-side traffic patterns. Identified probable guard node with ${results.top_finding?.confidence_level || 'Medium'} confidence.`
