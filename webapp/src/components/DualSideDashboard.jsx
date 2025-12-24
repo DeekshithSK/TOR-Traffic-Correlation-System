@@ -8,8 +8,11 @@ import {
  * Dual-Side PCAP Analysis Dashboard
  * Displays results when both entry + exit PCAPs are analyzed
  */
-export default function DualSideDashboard({ results }) {
+export default function DualSideDashboard({ results, caseInfo }) {
     const [selectedMatch, setSelectedMatch] = useState(null);
+
+    // Use caseInfo.case_id for actual case identifier (e.g., CASE-1766468634)
+    const actualCaseId = caseInfo?.case_id || 'CASE-UNKNOWN';
 
     const correlation = results.correlation || {};
     const topFinding = results.top_finding || {};
@@ -63,7 +66,7 @@ export default function DualSideDashboard({ results }) {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
-                                            case_id: results.case_id || 'CASE-DEMO',
+                                            case_id: actualCaseId,
                                             analysis_mode: 'guard_exit',
                                             results: results,
                                             pcap_hash: results.pcap_hash || null
@@ -74,7 +77,7 @@ export default function DualSideDashboard({ results }) {
                                         const url = window.URL.createObjectURL(blob);
                                         const a = document.createElement('a');
                                         a.href = url;
-                                        a.download = `Dual_Side_Report_${results.case_id || 'DEMO'}.pdf`;
+                                        a.download = `${actualCaseId}.pdf`;
                                         a.click();
                                         window.URL.revokeObjectURL(url);
                                     } else {
@@ -164,9 +167,6 @@ export default function DualSideDashboard({ results }) {
                     <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Confidence</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: topFinding.confidence_level === 'High' ? '#10b981' : '#3b82f6' }}>
-                                {((topFinding.confidence_score || 0) * 100).toFixed(0)}%
-                            </span>
                             <span style={{
                                 fontSize: '0.75rem',
                                 padding: '0.25rem 0.75rem',

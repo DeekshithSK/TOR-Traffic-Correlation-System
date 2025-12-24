@@ -6,7 +6,7 @@ Exposes forensic capabilities via REST API for the React frontend.
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Any, Optional
 import requests  # For geolocation API
 import shutil
@@ -135,12 +135,15 @@ NON_TOR_IP_PREFIXES = (
     '172.64.', '172.65.', '172.66.', '172.67.', '172.68.', '172.69.', '172.70.', '172.71.', # Cloudflare
     '142.250.', '142.251.',  # Google
     '216.58.',  # Google
+    # AWS IP ranges (EC2, CloudFront, etc.) - NOT Tor relays
+    '3.', '13.', '15.', '16.', '18.', '34.', '35.', '52.', '54.', '99.',
 )
 
 NON_TOR_ISPS = [
     'apple', 'icloud', 'akamai', 'cloudflare', 'fastly', 'cloudfront', 
-    'amazon.com', 'microsoft', 'azure', 'google cloud', 'facebook', 'meta',
-    'netflix', 'spotify', 'twitter', 'tiktok', 'snapchat'
+    'amazon', 'aws', 'ec2',  # AWS (fixed: was 'amazon.com' which didn't match 'Amazon Web Services')
+    'microsoft', 'azure', 'google cloud', 'gcp',
+    'facebook', 'meta', 'netflix', 'spotify', 'twitter', 'tiktok', 'snapchat'
 ]
 
 # Known Tor-friendly ISPs that commonly host Tor relays
@@ -1296,12 +1299,12 @@ async def run_analysis(
             geo_data = top_verified['geo']
             print(f"✓ Selected verified Tor guard: {top_verified['ip']} (score: {max_score:.1%})")
         else:
-            # Fallback to highest score (should rarely happen)
-            print(f"⚠️ No verified Tor guards found - using highest scoring candidate")
-            max_idx = int(np.argmax(confidence_scores))
-            max_score = confidence_scores[max_idx]
-            guard_node = labels[max_idx]
-            geo_data = get_ip_geolocation(guard_node)
+            # NO FALLBACK TO NON-TOR IPS - return "No Verified Guard" instead
+            print(f"⚠️ No verified Tor guards found - cannot identify guard node from this PCAP")
+            max_idx = 0
+            max_score = 0.0  # Zero confidence for no verified guard
+            guard_node = "No Verified Guard"
+            geo_data = {"ip": None, "country": "Unknown", "isp": "N/A", "flag": "⚠️"}
         
         # Determine Confidence Level
         if max_score >= 0.75:
@@ -1621,6 +1624,12 @@ async def run_analysis(
                 
                 print(f"✓ Selected guard {top_guard_ip} with combined score {top_pair['combined_score']*100:.1f}%")
                 print(f"   Top exit: {top_pair['exit_ip']}")
+            else:
+                # NO valid guard-exit pairs after filtering - all candidates were non-Tor IPs
+                print(f"⚠️ No valid guard-exit pairs found - all candidates filtered as non-Tor IPs")
+                guard_node = "No Verified Guard"
+                geo_data = {"ip": None, "country": "Unknown", "isp": "N/A", "flag": "⚠️"}
+                max_score = 0.0
             
             # Extract top 3 unique exit IPs with geo data for the INFERRED guard
             top_exit_nodes = []
@@ -1684,7 +1693,7 @@ async def run_analysis(
             matched_count = sum(1 for s in per_session if s.get('matched', False))
             
             # Extract guard IP from flow ID format: local_port_guard_port_proto
-            guard_ip_display = geo_data.get('ip', 'N/A')
+            guard_ip_display = geo_data.get('ip') or 'No Verified Guard'
             if '_' in str(guard_ip_display):
                 parts = guard_ip_display.split('_')
                 if len(parts) >= 3:
@@ -2149,8 +2158,7 @@ class DashboardReportRequest(BaseModel):
     results: Any  # Complex nested object from analysis
     pcap_hash: Optional[str] = None
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @app.post("/api/export-dashboard-report")

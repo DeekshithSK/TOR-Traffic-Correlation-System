@@ -36,7 +36,7 @@ function App() {
   }));
   const [fileData, setFileData] = useState(null);
   const [exitFileData, setExitFileData] = useState(null); // Exit PCAP for guard_exit mode
-  const [correlationMode, setCorrelationMode] = useState('guard_only'); // guard_only | guard_exit
+  const [correlationMode, setCorrelationMode] = useState('guard_exit'); // guard_only | guard_exit
   const [analysisResults, setAnalysisResults] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState(null);
@@ -116,29 +116,38 @@ function App() {
     setLoadingStep(0);
     setError(null);
 
-    // Simulated Progress Steps
-    for (let i = 0; i < ANALYSIS_STEPS.length; i++) {
-      setLoadingStep(i);
-      await new Promise(r => setTimeout(r, 1000));
-    }
+    // Build analysis request with mode
+    console.log('DEBUG: exitFileData =', exitFileData);
+    console.log('DEBUG: correlationMode =', correlationMode);
+
+    const params = new URLSearchParams({
+      mode: correlationMode,
+      ...(exitFileData?.path && { exit_path: exitFileData.path })
+    });
+
+    console.log('DEBUG: params =', params.toString());
+
+    // Run animation and API call IN PARALLEL
+    const animationPromise = (async () => {
+      for (let i = 0; i < ANALYSIS_STEPS.length; i++) {
+        setLoadingStep(i);
+        // Last step (100%) only waits 1 second, others wait 4 seconds
+        const delay = (i === ANALYSIS_STEPS.length - 1) ? 1000 : 4000;
+        await new Promise(r => setTimeout(r, delay));
+      }
+    })();
 
     try {
-      // Build analysis request with mode
-      console.log('DEBUG: exitFileData =', exitFileData);
-      console.log('DEBUG: correlationMode =', correlationMode);
-
-      const params = new URLSearchParams({
-        mode: correlationMode,
-        ...(exitFileData?.path && { exit_path: exitFileData.path })  // Pass actual PCAP path
-      });
-
-      console.log('DEBUG: params =', params.toString());
-
+      // API call runs at the same time as animation
       const res = await axios.post(`${API_BASE}/analyze/${caseInfo.case_id}?${params}`);
+
+      // Wait for animation to finish (if API was faster)
+      await animationPromise;
+
       setAnalysisResults(res.data);
       setView('results');
     } catch (err) {
-      // Handle both 'detail' (standard) and 'error' (legacy) response formats
+      // Cancel animation wait on error
       const errorMsg = err.response?.data?.detail
         || err.response?.data?.error
         || "Analysis pipeline failed. Please check the PCAP file and try again.";
@@ -206,25 +215,17 @@ function App() {
               exit={{ opacity: 0, y: -20 }}
               style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', maxWidth: '80rem', margin: '0 auto' }}
             >
-              {/* Step Wizard Progress */}
-              <StepWizard currentStep="upload" />
+
 
               {/* Title Section */}
               <div className="text-center mb-16">
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="inline-flex items-center gap-3 mb-6"
-                >
-                  <div className="w-14 h-14 rounded-xl gradient-ops flex items-center justify-center shadow-glow-cyan">
-                    <Crosshair className="w-7 h-7 text-white" />
-                  </div>
-                  <StatusBadge variant="secure" label="SYSTEM READY" showIcon pulse />
-                </motion.div>
-
-                <h1 className="font-heading-bold text-4xl md:text-5xl text-white tracking-tight mb-4">
-                  SECURE EVIDENCE INTAKE
+                <h1 className="text-5xl md:text-6xl font-bold text-white tracking-wide mb-4">
+                  PRIME CORRELATION ENGINE
                 </h1>
+
+                <h2 className="text-xl md:text-2xl font-semibold text-text-secondary tracking-tight mb-4">
+                  SECURE EVIDENCE INTAKE
+                </h2>
                 <p className="text-text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
                   Upload PCAP evidence for TOR traffic correlation analysis. All evidence is processed in a secure, isolated environment.
                 </p>
@@ -501,20 +502,33 @@ function App() {
                     <CardHeader title="Operational Protocol" icon={Shield} />
                     <CardBody className="space-y-4">
                       {[
-                        { num: '01', text: 'Evidence ingested with SHA-256 verification' },
-                        { num: '02', text: 'Flows sliced into temporal windows' },
-                        { num: '03', text: 'Neural network computes similarity' },
+                        { num: '01', text: 'Flows sliced into temporal windows' },
+                        { num: '02', text: 'Neural network computes similarity' },
                         {
-                          num: '04', text: correlationMode === 'guard_exit'
+                          num: '03', text: correlationMode === 'guard_exit'
                             ? 'Dual-Side correlation for enhanced confidence'
                             : 'Single-Side analysis with confidence scoring'
                         }
                       ].map((step, i) => (
-                        <div key={i} className="flex gap-3 group">
-                          <div className="w-8 h-8 rounded-lg bg-ops-black border border-ops-border flex items-center justify-center font-mono text-ops-cyan font-bold text-xs">
+                        <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                          <div style={{
+                            width: '2rem',
+                            height: '2rem',
+                            borderRadius: '0.5rem',
+                            backgroundColor: '#0a0c10',
+                            border: '1px solid #21262d',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'monospace',
+                            color: '#58a6ff',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem',
+                            flexShrink: 0
+                          }}>
                             {step.num}
                           </div>
-                          <p className="text-xs text-text-secondary leading-relaxed flex-1">
+                          <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: '1.6', flex: 1 }}>
                             {step.text}
                           </p>
                         </div>
@@ -542,8 +556,7 @@ function App() {
               exit={{ opacity: 0 }}
               className="space-y-10 max-w-7xl mx-auto"
             >
-              {/* Step Wizard Progress */}
-              <StepWizard currentStep="processing" />
+
 
               <div className="max-w-2xl w-full mx-auto">
                 <GlassCard variant="glow" className="overflow-visible">
@@ -624,13 +637,13 @@ function App() {
               <div style={{ padding: '2rem 1.5rem', marginTop: '1rem' }}>
                 {analysisResults.analysis_mode === 'exit_only' ? (
                   /* Exit-Side PCAP Analysis Dashboard */
-                  <ExitSideDashboard results={analysisResults} />
+                  <ExitSideDashboard results={analysisResults} caseInfo={caseInfo} />
                 ) : analysisResults.analysis_mode === 'entry_only' ? (
                   /* Entry-Side PCAP Analysis Dashboard */
-                  <EntrySideDashboard results={analysisResults} />
+                  <EntrySideDashboard results={analysisResults} caseInfo={caseInfo} />
                 ) : (
                   /* Dual-Side PCAP Analysis Dashboard */
-                  <DualSideDashboard results={analysisResults} />
+                  <DualSideDashboard results={analysisResults} caseInfo={caseInfo} />
                 )}
               </div>
 

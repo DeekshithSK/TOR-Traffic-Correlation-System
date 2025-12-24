@@ -5,8 +5,33 @@ Tamil Nadu Police 2025 - Forensic Investigation Unit
 """
 
 import os
+import json
 import hashlib
 from datetime import datetime, timezone
+from pathlib import Path
+
+# Case number counter file path
+CASE_COUNTER_FILE = Path("data/report_counter.json")
+CASE_NUMBER_START = 70001
+
+def _get_next_case_number():
+    """Get the next consecutive case number for reports."""
+    try:
+        CASE_COUNTER_FILE.parent.mkdir(parents=True, exist_ok=True)
+        if CASE_COUNTER_FILE.exists():
+            with open(CASE_COUNTER_FILE, 'r') as f:
+                data = json.load(f)
+                next_num = data.get('next_number', CASE_NUMBER_START)
+        else:
+            next_num = CASE_NUMBER_START
+        
+        # Increment and save
+        with open(CASE_COUNTER_FILE, 'w') as f:
+            json.dump({'next_number': next_num + 1}, f)
+        
+        return next_num
+    except Exception:
+        return CASE_NUMBER_START
 
 def _check_reportlab():
     """Check if reportlab is available at runtime."""
@@ -18,10 +43,37 @@ def _check_reportlab():
 
 
 def _get_country_flag_text(flag_emoji, country):
-    """Convert flag emoji to text representation for PDF compatibility."""
+    """Convert flag emoji to ISO country code for PDF compatibility."""
+    # Common flag emoji to ISO code mapping
+    flag_to_iso = {
+        '🇫🇷': 'FR', '🇩🇪': 'DE', '🇬🇧': 'GB', '🇺🇸': 'US', '🇳🇱': 'NL',
+        '🇸🇪': 'SE', '🇨🇭': 'CH', '🇦🇹': 'AT', '🇧🇪': 'BE', '🇮🇹': 'IT',
+        '🇪🇸': 'ES', '🇵🇹': 'PT', '🇵🇱': 'PL', '🇨🇿': 'CZ', '🇷🇴': 'RO',
+        '🇧🇬': 'BG', '🇭🇺': 'HU', '🇫🇮': 'FI', '🇳🇴': 'NO', '🇩🇰': 'DK',
+        '🇮🇪': 'IE', '🇱🇺': 'LU', '🇷🇺': 'RU', '🇺🇦': 'UA', '🇨🇦': 'CA',
+        '🇦🇺': 'AU', '🇯🇵': 'JP', '🇰🇷': 'KR', '🇨🇳': 'CN', '🇮🇳': 'IN',
+        '🇧🇷': 'BR', '🇲🇽': 'MX', '🇸🇬': 'SG', '🇭🇰': 'HK', '🇿🇦': 'ZA',
+        '🇸🇨': 'SC', '🇱🇹': 'LT', '🇱🇻': 'LV', '🇪🇪': 'EE', '🇬🇷': 'GR',
+        '🇹🇷': 'TR', '🇮🇱': 'IL', '🇦🇪': 'AE', '🇳🇿': 'NZ', '🇮🇩': 'ID',
+        '🌐': 'INTL'
+    }
+    
     if flag_emoji and country:
-        return f"[{flag_emoji}] {country}"
+        iso_code = flag_to_iso.get(flag_emoji, '')
+        if iso_code:
+            return f"[{iso_code}] {country}"
+        return country
     return country or "Unknown"
+
+
+def _get_confidence_label(score):
+    """Convert confidence score to merged label with threshold."""
+    if score >= 0.90:
+        return "High (≥90%)"
+    elif score >= 0.50:
+        return "Medium (≥50%)"
+    else:
+        return f"Low (<50%)"
 
 
 def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
@@ -42,8 +94,11 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
+    # Generate unique report number
+    report_number = _get_next_case_number()
+    
     if not filename:
-        filename = f"Entry_Side_Report_{case_id}.pdf"
+        filename = f"{case_id}.pdf"
     output_path = os.path.abspath(filename)
     
     # Create PDF document
@@ -84,7 +139,8 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     correlation = results.get('correlation', {})
     
     case_data = [
-        ['Case ID / Demo ID:', case_id],
+        ['Report Number:', str(report_number)],
+        ['Case ID:', case_id],
         ['Date &amp; Time (UTC):', timestamp],
         ['Investigating Unit:', 'Tamil Nadu Police 2025'],
         ['Analysis Mode:', 'Entry-Side (Guard Correlation)'],
@@ -105,8 +161,8 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(case_table)
     story.append(Spacer(1, 15))
     
-    # Section 1: Primary Finding - Inferred Guard Node
-    story.append(Paragraph("1. PRIMARY FINDING: INFERRED GUARD NODE", section_style))
+    # Section 1: Primary Finding - Identified Guard Node
+    story.append(Paragraph("1. PRIMARY FINDING: IDENTIFIED GUARD NODE", section_style))
     
     guard_ip = top_finding.get('ip', 'N/A')
     guard_country = top_finding.get('country', 'Unknown')
@@ -120,14 +176,14 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
             ['Guard Node IP:', guard_ip],
             ['Country:', _get_country_flag_text(guard_flag, guard_country)],
             ['ISP / ASN:', guard_isp],
-            ['Correlation Confidence:', f"{conf_score*100:.0f}% ({conf_level})"],
+            ['Confidence Level:', _get_confidence_label(conf_score)],
             ['Correlated Sessions:', str(top_finding.get('correlated_sessions', 'N/A'))],
         ]
         
-        # Add Client IP if available
+        # Add Inferred Client Network Identifier if available
         origin_ip = top_finding.get('origin_ip')
         if origin_ip:
-            guard_data.append(['Client IP (Connected to Guard):', origin_ip])
+            guard_data.append(['Inferred Client Network Identifier:', origin_ip])
         
         guard_table = Table(guard_data, colWidths=[160, 290])
         guard_table.setStyle(TableStyle([
@@ -153,18 +209,17 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     probable_exits = correlation.get('probable_exits', []) or results.get('probable_exit_nodes', [])
     
     if probable_exits:
-        exit_headers = [['#', 'IP Address', 'Country', 'ISP', 'Bandwidth', 'Probability']]
+        exit_headers = [['#', 'IP Address', 'Country', 'ISP', 'Probability']]
         for i, exit_node in enumerate(probable_exits[:5], 1):
             exit_headers.append([
                 str(i),
                 exit_node.get('ip', 'N/A'),
                 _get_country_flag_text(exit_node.get('flag', ''), exit_node.get('country', '')),
-                (exit_node.get('isp', '') or '')[:20],
-                f"{exit_node.get('bandwidth', 0)/1000000:.1f} MB/s" if exit_node.get('bandwidth') else 'N/A',
+                (exit_node.get('isp', '') or '')[:25],
                 f"{exit_node.get('probability', 0)*100:.0f}%"
             ])
         
-        exit_table = Table(exit_headers, colWidths=[25, 100, 100, 100, 60, 60])
+        exit_table = Table(exit_headers, colWidths=[25, 110, 110, 130, 70])
         exit_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor('#8b5cf6')),
             ('TEXTCOLOR', (0, 0), (-1, 0), white),
@@ -209,8 +264,32 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(metrics_table)
     story.append(Spacer(1, 15))
     
-    # Section 4: Legal Notice
-    story.append(Paragraph("4. FORENSIC NOTICE", section_style))
+    # Section 4: Correlation Method
+    story.append(Paragraph("4. CORRELATION METHOD", section_style))
+    method_data = [
+        ['Technique', 'Description'],
+        ['Time-window alignment', 'Millisecond-level temporal correlation'],
+        ['Packet burst similarity', 'Burst pattern matching across flows'],
+        ['Flow size distribution', 'Statistical comparison of packet sizes'],
+        ['Guard stability', 'Bandwidth weighting from Tor consensus'],
+        ['Tor consensus verification', 'Cross-reference with live relay data'],
+    ]
+    method_table = Table(method_data, colWidths=[150, 300])
+    method_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#6366f1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#eef2ff')),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#a5b4fc')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(method_table)
+    story.append(Spacer(1, 15))
+    
+    # Section 5: Forensic Notice
+    story.append(Paragraph("5. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides investigative intelligence based on traffic correlation analysis. "
         "Results should be corroborated with independent evidence. Guard nodes may serve multiple "
@@ -250,8 +329,11 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
+    # Generate unique report number
+    report_number = _get_next_case_number()
+    
     if not filename:
-        filename = f"Exit_Side_Report_{case_id}.pdf"
+        filename = f"{case_id}.pdf"
     output_path = os.path.abspath(filename)
     
     doc = SimpleDocTemplate(output_path, pagesize=A4, rightMargin=20*mm, leftMargin=20*mm,
@@ -280,7 +362,8 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     # Case Info
     case_data = [
-        ['Case ID / Demo ID:', case_id],
+        ['Report Number:', str(report_number)],
+        ['Case ID:', case_id],
         ['Date &amp; Time (UTC):', timestamp],
         ['Investigating Unit:', 'Tamil Nadu Police 2025'],
         ['Analysis Mode:', 'Exit-Side (Exit Node Detection)'],
@@ -340,18 +423,17 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     probable_guards = correlation.get('probable_guards', [])
     
     if probable_guards:
-        guard_headers = [['#', 'IP Address', 'Nickname', 'Country', 'Bandwidth', 'Probability']]
+        guard_headers = [['#', 'IP Address', 'Nickname', 'Country', 'Probability']]
         for i, guard in enumerate(probable_guards[:5], 1):
             guard_headers.append([
                 str(i),
                 guard.get('ip', 'N/A'),
-                (guard.get('nickname', '') or '')[:12],
+                (guard.get('nickname', '') or '')[:15],
                 _get_country_flag_text(guard.get('flag', ''), guard.get('country', '')),
-                f"{guard.get('relay_bandwidth', 0)/1000000:.1f} MB/s" if guard.get('relay_bandwidth') else 'N/A',
                 f"{guard.get('guard_probability', 0)*100:.0f}%"
             ])
         
-        guard_table = Table(guard_headers, colWidths=[25, 100, 80, 80, 70, 60])
+        guard_table = Table(guard_headers, colWidths=[25, 120, 90, 120, 70])
         guard_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor('#10b981')),
             ('TEXTCOLOR', (0, 0), (-1, 0), white),
@@ -423,8 +505,32 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(traffic_table)
     story.append(Spacer(1, 15))
     
-    # Footer
-    story.append(Paragraph("5. FORENSIC NOTICE", section_style))
+    # Section 5: Correlation Method
+    story.append(Paragraph("5. CORRELATION METHOD", section_style))
+    method_data = [
+        ['Technique', 'Description'],
+        ['Time-window alignment', 'Millisecond-level temporal correlation'],
+        ['Packet burst similarity', 'Burst pattern matching across flows'],
+        ['Flow size distribution', 'Statistical comparison of packet sizes'],
+        ['Guard stability', 'Bandwidth weighting from Tor consensus'],
+        ['Tor consensus verification', 'Cross-reference with live relay data'],
+    ]
+    method_table = Table(method_data, colWidths=[150, 300])
+    method_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#6366f1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#eef2ff')),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#a5b4fc')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(method_table)
+    story.append(Spacer(1, 15))
+    
+    # Section 6: Forensic Notice
+    story.append(Paragraph("6. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides investigative intelligence based on exit-side traffic analysis. "
         "Guard node predictions are probabilistic based on Tor consensus bandwidth weighting.",
@@ -462,8 +568,11 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
+    # Generate unique report number
+    report_number = _get_next_case_number()
+    
     if not filename:
-        filename = f"Dual_Side_Report_{case_id}.pdf"
+        filename = f"{case_id}.pdf"
     output_path = os.path.abspath(filename)
     
     doc = SimpleDocTemplate(output_path, pagesize=A4, rightMargin=20*mm, leftMargin=20*mm,
@@ -493,7 +602,8 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     # Case Info
     case_data = [
-        ['Case ID / Demo ID:', case_id],
+        ['Report Number:', str(report_number)],
+        ['Case ID:', case_id],
         ['Date &amp; Time (UTC):', timestamp],
         ['Investigating Unit:', 'Tamil Nadu Police 2025'],
         ['Analysis Mode:', 'Dual-Side (Entry + Exit Correlation)'],
@@ -541,11 +651,11 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(metrics_table)
     story.append(Spacer(1, 15))
     
-    # Section 2: Top Guard-Exit Matches
-    story.append(Paragraph("2. TOP GUARD-EXIT MATCHES (Ranked by Confidence)", section_style))
+    # Section 2: Top Probable Connections
+    story.append(Paragraph("2. TOP PROBABLE CONNECTIONS ESTABLISHED (>90% Confidence)", section_style))
     
     if guard_exit_pairs:
-        match_headers = [['#', 'Guard IP', 'Exit IP', 'Guard Conf.', 'Exit Score', 'Combined', 'Origin IP']]
+        match_headers = [['#', 'Guard IP', 'Exit IP', 'Guard Conf.', 'Exit Score', 'Origin IP']]
         for i, pair in enumerate(guard_exit_pairs[:5], 1):
             match_headers.append([
                 str(i),
@@ -553,11 +663,10 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
                 pair.get('exit_ip', 'N/A')[:18],
                 f"{pair.get('guard_confidence', 0)*100:.0f}%",
                 f"{pair.get('exit_score', 0)*100:.0f}%",
-                f"{pair.get('combined_score', 0)*100:.0f}%",
                 pair.get('origin_ip', 'N/A') or 'N/A'
             ])
         
-        match_table = Table(match_headers, colWidths=[20, 75, 75, 55, 55, 55, 75])
+        match_table = Table(match_headers, colWidths=[20, 85, 85, 60, 60, 100])
         match_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor('#6366f1')),
             ('TEXTCOLOR', (0, 0), (-1, 0), white),
@@ -583,12 +692,11 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
             ['Guard Node IP:', guard_ip],
             ['Country:', _get_country_flag_text(top_finding.get('flag', ''), top_finding.get('country', ''))],
             ['ISP:', top_finding.get('isp', 'Unknown')],
-            ['Confidence Score:', f"{top_finding.get('confidence_score', 0)*100:.0f}%"],
-            ['Confidence Level:', top_finding.get('confidence_level', 'N/A')],
+            ['Confidence Level:', _get_confidence_label(top_finding.get('confidence_score', 0))],
         ]
         
         if top_finding.get('origin_ip'):
-            primary_data.append(['Client Origin IP:', top_finding.get('origin_ip')])
+            primary_data.append(['Inferred Client Network Identifier:', top_finding.get('origin_ip')])
         
         primary_table = Table(primary_data, colWidths=[150, 300])
         primary_table.setStyle(TableStyle([
@@ -638,8 +746,32 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Footer
-    story.append(Paragraph("5. FORENSIC NOTICE", section_style))
+    # Section 5: Correlation Method
+    story.append(Paragraph("5. CORRELATION METHOD", section_style))
+    method_data = [
+        ['Technique', 'Description'],
+        ['Time-window alignment', 'Millisecond-level temporal correlation'],
+        ['Packet burst similarity', 'Burst pattern matching across flows'],
+        ['Flow size distribution', 'Statistical comparison of packet sizes'],
+        ['Guard stability', 'Bandwidth weighting from Tor consensus'],
+        ['Tor consensus verification', 'Cross-reference with live relay data'],
+    ]
+    method_table = Table(method_data, colWidths=[150, 300])
+    method_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#6366f1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#eef2ff')),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#a5b4fc')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(method_table)
+    story.append(Spacer(1, 15))
+    
+    # Section 6: Forensic Notice
+    story.append(Paragraph("6. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides the highest confidence correlation from dual-side PCAP analysis. "
         "Entry-exit matching uses flow timing, burst patterns, and Tor consensus verification. "

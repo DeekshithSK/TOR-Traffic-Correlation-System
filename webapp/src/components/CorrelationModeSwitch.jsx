@@ -36,8 +36,8 @@ export default function CorrelationModeSwitch({ mode, onModeChange }) {
                             className={`
                 relative p-4 rounded-xl border-2 transition-all duration-200 text-left
                 ${isActive
-                                    ? `border-${m.color} bg-${m.color}/10 shadow-lg`
-                                    : 'border-ops-border bg-ops-panel hover:border-ops-border/80'
+                                    ? `border-${m.color} bg-${m.color}/25 shadow-lg ring-2 ring-${m.color}/50`
+                                    : 'border-ops-border bg-ops-panel/30 hover:border-ops-border/80 opacity-60'
                                 }
               `}
                         >

@@ -7,9 +7,12 @@ import {
  * Entry-Side PCAP Analysis Dashboard
  * Displays results when an entry-side (guard) PCAP is analyzed
  * 
- * Primary focus: Inferred Guard Node
+ * Primary focus: Identified Guard Nodes
  */
-export default function EntrySideDashboard({ results }) {
+export default function EntrySideDashboard({ results, caseInfo }) {
+    // Use caseInfo.case_id for actual case identifier (e.g., CASE-1766468634)
+    const actualCaseId = caseInfo?.case_id || 'CASE-UNKNOWN';
+
     const topFinding = results.top_finding || {};
     const correlation = results.correlation || {};
     const details = results.details || {};
@@ -66,7 +69,7 @@ export default function EntrySideDashboard({ results }) {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
-                                            case_id: results.case_id || 'CASE-DEMO',
+                                            case_id: actualCaseId,
                                             analysis_mode: 'entry_only',
                                             results: results,
                                             pcap_hash: results.pcap_hash || null
@@ -77,7 +80,7 @@ export default function EntrySideDashboard({ results }) {
                                         const url = window.URL.createObjectURL(blob);
                                         const a = document.createElement('a');
                                         a.href = url;
-                                        a.download = `Entry_Side_Report_${results.case_id || 'DEMO'}.pdf`;
+                                        a.download = `${actualCaseId}.pdf`;
                                         a.click();
                                         window.URL.revokeObjectURL(url);
                                     } else {
@@ -124,64 +127,66 @@ export default function EntrySideDashboard({ results }) {
             {/* Main Grid - 2 Columns */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
 
-                {/* LEFT: Primary Finding - Guard Node */}
+                {/* LEFT: Identified Guard Nodes */}
                 <div className="panel" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                         <Target style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
                         <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>
-                            Inferred Guard Node
+                            Identified Guard Nodes
                         </h3>
                     </div>
 
-                    {topFinding.ip ? (
-                        <div>
-                            {/* Main IP Display */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                                <span style={{ fontSize: '2.5rem' }}>{topFinding.flag || '🌐'}</span>
-                                <div>
-                                    <p style={{
-                                        fontFamily: 'monospace',
-                                        fontSize: '1.5rem',
-                                        color: 'white',
-                                        fontWeight: 'bold',
-                                        margin: 0
-                                    }}>
-                                        {topFinding.ip}
-                                    </p>
-                                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', margin: 0 }}>
-                                        {topFinding.country || 'Unknown Location'}
-                                    </p>
+                    {labels.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {labels.slice(0, 5).map((ip, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        padding: '0.75rem',
+                                        borderRadius: '0.5rem',
+                                        backgroundColor: idx === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+                                        border: idx === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : 'none'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <span style={{ fontSize: '1.25rem' }}>{idx === 0 && topFinding.flag ? topFinding.flag : '🌐'}</span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{
+                                                fontFamily: 'monospace',
+                                                fontSize: idx === 0 ? '1.125rem' : '0.875rem',
+                                                color: 'white',
+                                                fontWeight: idx === 0 ? 'bold' : '600',
+                                                margin: 0
+                                            }}>
+                                                {ip}
+                                            </p>
+                                            {idx === 0 && topFinding.country && (
+                                                <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>
+                                                    {topFinding.country}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{
+                                                fontSize: idx === 0 ? '1.25rem' : '1rem',
+                                                fontWeight: 'bold',
+                                                color: idx === 0 ? '#10b981' : '#9ca3af',
+                                                margin: 0
+                                            }}>
+                                                {confidenceScores[idx] ? `${(confidenceScores[idx] * 100).toFixed(0)}%` : 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            ))}
 
-                            {/* Metadata Grid */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(2, 1fr)',
-                                gap: '1rem',
-                                marginBottom: '1.5rem'
-                            }}>
-                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                                    <p style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>ISP / ASN</p>
-                                    <p style={{ fontSize: '0.875rem', color: 'white', margin: '0.25rem 0 0 0' }}>
-                                        {topFinding.isp || 'Unknown'}
-                                    </p>
-                                </div>
-                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                                    <p style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>Relay Role</p>
-                                    <p style={{ fontSize: '0.875rem', color: '#10b981', fontWeight: '600', margin: '0.25rem 0 0 0' }}>
-                                        Guard Relay
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Client IP Display */}
+                            {/* Client Origin IP */}
                             {topFinding.origin_ip && (
                                 <div style={{
-                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    marginTop: '0.5rem',
                                     padding: '0.75rem',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                                     borderRadius: '0.5rem',
-                                    marginBottom: '1rem',
                                     border: '1px solid rgba(59, 130, 246, 0.3)'
                                 }}>
                                     <p style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>
@@ -198,39 +203,54 @@ export default function EntrySideDashboard({ results }) {
                                     </p>
                                 </div>
                             )}
-
-                            {/* Confidence Score */}
-                            <div style={{
-                                padding: '1rem',
-                                borderRadius: '0.5rem',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>Correlation Confidence</p>
-                                        <p style={{ fontSize: '0.625rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
-                                            {topFinding.confidence_level || 'Medium'} confidence match
-                                        </p>
-                                    </div>
-                                    <span style={{
-                                        fontSize: '2rem',
+                        </div>
+                    ) : topFinding.ip ? (
+                        <div>
+                            {/* Single Top Finding Display */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                <span style={{ fontSize: '2rem' }}>{topFinding.flag || '🌐'}</span>
+                                <div>
+                                    <p style={{
+                                        fontFamily: 'monospace',
+                                        fontSize: '1.25rem',
+                                        color: 'white',
                                         fontWeight: 'bold',
-                                        color: '#10b981'
+                                        margin: 0
                                     }}>
-                                        {topFinding.confidence_score
-                                            ? `${(topFinding.confidence_score * 100).toFixed(0)}`
-                                            : topFinding.guard_confidence
-                                                ? `${(topFinding.guard_confidence * 100).toFixed(0)}`
-                                                : 'N/A'}
-                                    </span>
+                                        {topFinding.ip}
+                                    </p>
+                                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', margin: 0 }}>
+                                        {topFinding.country || 'Unknown Location'}
+                                    </p>
                                 </div>
                             </div>
+
+                            {topFinding.origin_ip && (
+                                <div style={{
+                                    padding: '0.75rem',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderRadius: '0.5rem',
+                                    border: '1px solid rgba(59, 130, 246, 0.3)'
+                                }}>
+                                    <p style={{ fontSize: '0.625rem', color: '#9ca3af', textTransform: 'uppercase', margin: 0 }}>
+                                        🖥️ Client IP
+                                    </p>
+                                    <p style={{
+                                        fontFamily: 'monospace',
+                                        fontSize: '1rem',
+                                        color: '#3b82f6',
+                                        fontWeight: '600',
+                                        margin: '0.25rem 0 0 0'
+                                    }}>
+                                        {topFinding.origin_ip}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
                             <Shield style={{ width: '3rem', height: '3rem', margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <p>No guard node detected</p>
+                            <p>No guard nodes identified</p>
                         </div>
                     )}
                 </div>
