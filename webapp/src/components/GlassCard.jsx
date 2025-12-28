@@ -33,12 +33,12 @@ export default function GlassCard({
             {...animationProps}
             {...props}
         >
-            {/* Scan line effect for glow variant */}
+            {}
             {variant === 'glow' && (
                 <div className="scan-overlay opacity-30" />
             )}
 
-            {/* Content */}
+            {}
             <div className="relative z-10">
                 {children}
             </div>
@@ -46,7 +46,6 @@ export default function GlassCard({
     );
 }
 
-// Card Header Component
 export function CardHeader({ title, icon: Icon, badge, action, className = '' }) {
     return (
         <div className={`flex items-center justify-between px-6 py-4 border-b border-ops-border ${className}`}>
@@ -72,7 +71,6 @@ export function CardHeader({ title, icon: Icon, badge, action, className = '' })
     );
 }
 
-// Card Body Component
 export function CardBody({ children, className = '' }) {
     return (
         <div className={`p-6 ${className}`}>
@@ -81,7 +79,6 @@ export function CardBody({ children, className = '' }) {
     );
 }
 
-// Card Footer Component
 export function CardFooter({ children, className = '' }) {
     return (
         <div className={`px-6 py-4 border-t border-ops-border bg-ops-black/30 ${className}`}>

@@ -22,7 +22,6 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import logging
 
-# Import our modules
 from statistical_similarity import (
     process_flow,
     statistical_similarity,
@@ -66,7 +65,6 @@ class CorrelationPipeline:
             top_k_for_siamese: Number of top candidates for Siamese refinement
             device: Device for Siamese model ('cpu', 'cuda', 'mps', or None)
         """
-        # Hardcoded Security Enforcement
         CERTIFIED_MODEL_PATH = "lightweight_siamese.pth"
         
         if siamese_model_path is not None:
@@ -76,7 +74,6 @@ class CorrelationPipeline:
         self.siamese_weight = siamese_weight
         self.top_k = top_k_for_siamese
         
-        # Validate weights
         if not np.isclose(statistical_weight + siamese_weight, 1.0):
             logger.warning(
                 f"Weights don't sum to 1.0: {statistical_weight} + {siamese_weight} = "
@@ -86,7 +83,6 @@ class CorrelationPipeline:
             self.statistical_weight = statistical_weight / total
             self.siamese_weight = siamese_weight / total
         
-        # Load Certified Siamese model
         if not Path(CERTIFIED_MODEL_PATH).exists():
              raise FileNotFoundError(f"CRITICAL: Certified model '{CERTIFIED_MODEL_PATH}' missing!")
              
@@ -100,7 +96,6 @@ class CorrelationPipeline:
         logger.info(f"   Top-K for Siamese: {self.top_k}")
         logger.info(f"   Model parameters: {self.model_info['total_parameters']:,}")
         
-        # Initialize Analysis Modules
         self.entry_aggregator = EntryNodeAggregator()
         self.tor_directory = TorDirectory()
     
@@ -130,22 +125,16 @@ class CorrelationPipeline:
             try:
                 flow_data = flow_store[flow_id]
                 
-                # Extract packet sizes
                 sizes = np.array(flow_data['sizes'])
                 
-                # Create flow array (N, 3) format: [size, timestamp, direction]
-                # For simplicity, we'll just use sizes since process_flow uses column 0
                 if 'timestamps' in flow_data and 'directions' in flow_data:
                     timestamps = np.array(flow_data['timestamps'])
                     directions = np.array([1 if d == 'in' else -1 for d in flow_data['directions']])
                     
-                    # Create (N, 3) array
                     flow_array = np.column_stack([sizes, timestamps, directions])
                 else:
-                    # Just use sizes as 1D array
                     flow_array = sizes
                 
-                # Process to fixed length
                 processed = process_flow(flow_array)
                 processed_flows[flow_id] = processed
                 
@@ -257,16 +246,12 @@ class CorrelationPipeline:
         results = {}
         
         for flow_id, stat_score in statistical_scores.items():
-            # Get Siamese score if available (only top-K have Siamese scores)
             siamese_score = siamese_scores.get(flow_id, 0.0)
             
-            # Compute final score
             if flow_id in siamese_scores:
-                # Top-K: use both scores
                 final_score = (self.statistical_weight * stat_score + 
                              self.siamese_weight * siamese_score)
             else:
-                # Outside top-K: use only statistical score
                 final_score = stat_score * self.statistical_weight
             
             results[flow_id] = {
@@ -290,7 +275,6 @@ class CorrelationPipeline:
         Returns:
             Ranked list of candidates with scores
         """
-        # Sort by final score (descending)
         ranked = sorted(
             [
                 {
@@ -303,10 +287,8 @@ class CorrelationPipeline:
             reverse=True
         )
         
-        # Add rank and client_ip
         for i, item in enumerate(ranked, 1):
             item['rank'] = i
-            # Extract client IP from flow_id
             src_ip, dst_ip = extract_ips_from_flow_id(item['flow_id'])
             item['client_ip'] = src_ip
         
@@ -348,7 +330,6 @@ class CorrelationPipeline:
         logger.info(f"Candidates: {len(filtered_flow_ids)}")
         logger.info(f"Top-K for Siamese: {top_k}")
         
-        # Step 1: Load raw flows
         all_flows = self.load_raw_flows(
             filtered_flow_ids + [target_flow_id],
             flow_store
@@ -361,49 +342,35 @@ class CorrelationPipeline:
         candidate_flows = {fid: flow for fid, flow in all_flows.items() 
                           if fid != target_flow_id}
         
-        # Step 2: Compute statistical similarity (ALL candidates)
         statistical_scores = self.compute_statistical_scores(
             target_flow,
             candidate_flows
         )
         
-        # Step 3: Select top-K by statistical score
         top_k_ids = self.select_top_k(statistical_scores, top_k)
         top_k_flows = {fid: candidate_flows[fid] for fid in top_k_ids}
         
-        # Step 4: Apply Siamese refinement (top-K only)
         siamese_scores = self.refine_with_siamese(target_flow, top_k_flows)
         
-        # Step 5: Fuse scores
         fused_scores = self.fuse_scores(statistical_scores, siamese_scores)
         
-        # Step 6: Generate final ranking
         ranked_candidates = self.generate_ranking(fused_scores)
         
-        # Step 7: Entry Node Aggregation & TOR Enrichment
         logger.info("Enriching results with Entry Node Aggregation and TOR Topology...")
         for candidate in ranked_candidates:
             flow_id = candidate['flow_id']
             score = candidate['final']
             
-            # Retrieve flow metadata to identify potential guard IP
-            # Assuming flow_store has 'src_ip' or similar for entry flows
-            # If not available, we use flow_id as a proxy identifier
             flow_meta = flow_store.get(flow_id, {})
             guard_identifier = flow_meta.get('src_ip') or flow_meta.get('client_ip') or flow_id
             
-            # Update evidence for this guard candidate
             self.entry_aggregator.update_evidence(guard_identifier, score)
             
-            # Enrich with Aggregated Evidence
             candidate['guard_identifier'] = guard_identifier
             evidence = self.entry_aggregator.get_ranked_guards()
-            # Find evidence for this specific guard
             guard_evidence = next((e for e in evidence if e['guard_id'] == guard_identifier), None)
             candidate['aggregated_evidence'] = guard_evidence
             
-            # Enrich with TOR Directory Data
-            # Try to lookup by IP if it looks like an IP, otherwise simple search
             relay_info = self.tor_directory.search_relay(guard_identifier)
             candidate['tor_relay_info'] = relay_info
             
@@ -425,7 +392,6 @@ class CorrelationPipeline:
         else:
             logger.warning("No candidates found.")
         
-        # Generate IP-level leads from ranked candidates
         ip_leads = generate_ip_leads(ranked_candidates)
         
         return {
@@ -458,25 +424,21 @@ def save_correlation_results(results: Dict, output_dir: Path):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save ranked candidates
     ranked_path = output_dir / 'ranked_candidates.json'
     with open(ranked_path, 'w') as f:
         json.dump(results['ranked_candidates'], f, indent=2)
     logger.info(f"✅ Ranked candidates saved: {ranked_path}")
     
-    # Save statistical scores
     stat_path = output_dir / 'statistical_scores.json'
     with open(stat_path, 'w') as f:
         json.dump(results['statistical_scores'], f, indent=2)
     logger.info(f"✅ Statistical scores saved: {stat_path}")
     
-    # Save Siamese scores
     siamese_path = output_dir / 'siamese_scores.json'
     with open(siamese_path, 'w') as f:
         json.dump(results['siamese_scores'], f, indent=2)
     logger.info(f"✅ Siamese scores saved: {siamese_path}")
     
-    # Save correlation manifest
     manifest = {
         'target_flow_id': results['target_flow_id'],
         'metadata': results['metadata'],
@@ -495,23 +457,18 @@ def save_correlation_results(results: Dict, output_dir: Path):
     logger.info(f"✅ Correlation manifest saved: {manifest_path}")
 
 
-# ============================================================================
-# Testing
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 70)
     print("Correlation Pipeline - Test")
     print("=" * 70)
     
-    # Check if model exists
     model_path = "./lightweight_siamese.pth"
     if not Path(model_path).exists():
         print(f"❌ Model file not found: {model_path}")
         print("   Please ensure lightweight_siamese.pth is in the current directory")
         exit(1)
     
-    # Create dummy flow store
     print("\nCreating dummy flow store...")
     flow_store = {}
     for i in range(100):
@@ -522,7 +479,6 @@ if __name__ == "__main__":
             'directions': ['in' if j % 2 == 0 else 'out' for j in range(len(sizes))]
         }
     
-    # Initialize pipeline
     print("\nInitializing correlation pipeline...")
     pipeline = CorrelationPipeline(
         siamese_model_path=model_path,
@@ -531,7 +487,6 @@ if __name__ == "__main__":
         top_k_for_siamese=20
     )
     
-    # Run correlation
     print("\nRunning correlation...")
     results = pipeline.run(
         target_flow_id='flow_0',
@@ -540,7 +495,6 @@ if __name__ == "__main__":
         top_k=20
     )
     
-    # Display results
     print("\n" + "=" * 70)
     print("Top 10 Ranked Candidates:")
     print("=" * 70)
@@ -552,7 +506,6 @@ if __name__ == "__main__":
               f"Statistical: {candidate['statistical']:.4f} | "
               f"Siamese: {s_str}")
     
-    # Save results
     print("\nSaving results...")
     save_correlation_results(results, Path('./test_correlation_output'))
     

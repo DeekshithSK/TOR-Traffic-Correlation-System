@@ -22,16 +22,11 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# Constants
-# ============================================================================
 
-# ASN patterns for hosting profile classification
 VPS_HOSTING_KEYWORDS = [
     'digitalocean', 'linode', 'vultr', 'hetzner', 'ovh', 'amazon', 'aws',
     'google cloud', 'microsoft azure', 'azure', 'gcp', 'cloudflare',
@@ -53,7 +48,6 @@ RESIDENTIAL_ISP_KEYWORDS = [
     'sfr', 'numericable', 'ono', 'movistar', 'jazztel', 'ziggo', 'kpn'
 ]
 
-# Regional proximity indicators
 REGION_GROUPS = {
     'Western Europe': ['DE', 'FR', 'NL', 'BE', 'LU', 'CH', 'AT', 'GB', 'IE'],
     'Northern Europe': ['SE', 'NO', 'FI', 'DK', 'IS', 'EE', 'LV', 'LT'],
@@ -70,9 +64,6 @@ REGION_GROUPS = {
 }
 
 
-# ============================================================================
-# Enums and Data Classes
-# ============================================================================
 
 class HostingProfile(Enum):
     """Guard relay hosting profile classification."""
@@ -98,29 +89,23 @@ class OriginScopeResult:
     IMPORTANT: This is CONTEXTUAL INTELLIGENCE only.
     It does NOT identify the user's exact IP address.
     """
-    # Guard information (read-only, from prior inference)
     guard_country: str
     guard_country_code: Optional[str]
     guard_asn: Optional[str]
     guard_isp: Optional[str]
     
-    # Hosting profile classification
     hosting_profile: str
     hosting_profile_description: str
     
-    # Probable origin scope (NOT exact location)
     probable_origin_region: str
     probable_origin_countries: List[str]
     regional_radius_description: str
     
-    # ISP/ASN category (NOT specific network)
     origin_isp_category: str
     
-    # Confidence (qualitative only)
     confidence_level: str
     confidence_reasoning: str
     
-    # Explicit disclaimers
     disclaimer: str = (
         "This is contextual intelligence only. It does NOT identify the user's "
         "exact IP address. The probable origin scope is an estimation based on "
@@ -133,9 +118,6 @@ class OriginScopeResult:
         return asdict(self)
 
 
-# ============================================================================
-# Hosting Profile Classifier
-# ============================================================================
 
 class HostingProfileClassifier:
     """
@@ -160,7 +142,6 @@ class HostingProfileClassifier:
         
         isp_lower = isp.lower()
         
-        # Check for VPS/Cloud hosting
         for keyword in VPS_HOSTING_KEYWORDS:
             if keyword in isp_lower:
                 return (
@@ -168,7 +149,6 @@ class HostingProfileClassifier:
                     f"Guard hosted on commercial VPS/cloud infrastructure ({isp})"
                 )
         
-        # Check for academic networks
         for keyword in ACADEMIC_KEYWORDS:
             if keyword in isp_lower:
                 return (
@@ -176,7 +156,6 @@ class HostingProfileClassifier:
                     f"Guard hosted on academic/research network ({isp})"
                 )
         
-        # Check for residential ISPs
         for keyword in RESIDENTIAL_ISP_KEYWORDS:
             if keyword in isp_lower:
                 return (
@@ -184,16 +163,12 @@ class HostingProfileClassifier:
                     f"Guard appears to be on residential ISP ({isp})"
                 )
         
-        # Default to enterprise for unmatched
         return (
             HostingProfile.ENTERPRISE,
             f"Guard on enterprise/unclassified network ({isp})"
         )
 
 
-# ============================================================================
-# Origin Region Estimator
-# ============================================================================
 
 class OriginRegionEstimator:
     """
@@ -240,7 +215,6 @@ class OriginRegionEstimator:
         neighbor_countries = self.get_neighbor_countries(guard_country_code)
         
         if hosting_profile == HostingProfile.VPS_COMMERCIAL:
-            # VPS guards are chosen globally - wide scope
             return (
                 "Global (VPS hosting enables worldwide selection)",
                 ["Global reach - cannot narrow by geography"],
@@ -249,7 +223,6 @@ class OriginRegionEstimator:
             )
         
         elif hosting_profile == HostingProfile.RESIDENTIAL_ISP:
-            # Residential ISP guards suggest local user (rare, higher signal)
             return (
                 region,
                 [guard_country_code],  # Single country most likely
@@ -258,7 +231,6 @@ class OriginRegionEstimator:
             )
         
         elif hosting_profile == HostingProfile.ACADEMIC:
-            # Academic guards suggest user with academic ties
             return (
                 region,
                 neighbor_countries,
@@ -267,7 +239,6 @@ class OriginRegionEstimator:
             )
         
         else:
-            # Enterprise or unknown - moderate scope
             return (
                 region,
                 neighbor_countries,
@@ -276,9 +247,6 @@ class OriginRegionEstimator:
             )
 
 
-# ============================================================================
-# Main Origin Scope Estimation Class
-# ============================================================================
 
 class OriginScopeEstimator:
     """
@@ -318,18 +286,15 @@ class OriginScopeEstimator:
         """
         logger.info(f"Estimating origin scope for guard in {guard_country}")
         
-        # Step 1: Classify hosting profile
         hosting_profile, hosting_desc = self.hosting_classifier.classify(
             guard_isp, guard_asn
         )
         
-        # Step 2: Estimate origin region
         country_code = guard_country_code or "XX"
         region, probable_countries, radius_desc, confidence = self.region_estimator.estimate(
             country_code, hosting_profile
         )
         
-        # Step 3: Categorize ISP type (NOT specific network)
         if hosting_profile == HostingProfile.VPS_COMMERCIAL:
             isp_category = "Commercial Cloud/VPS Infrastructure"
         elif hosting_profile == HostingProfile.RESIDENTIAL_ISP:
@@ -339,7 +304,6 @@ class OriginScopeEstimator:
         else:
             isp_category = "Enterprise/Commercial Network"
         
-        # Step 4: Build confidence reasoning
         confidence_reasons = []
         if hosting_profile == HostingProfile.VPS_COMMERCIAL:
             confidence_reasons.append("Guard on VPS - users can select globally")
@@ -351,7 +315,6 @@ class OriginScopeEstimator:
         if guard_flags and 'Stable' in guard_flags:
             confidence_reasons.append("Guard has Stable flag - established relay")
         
-        # Build result
         result = OriginScopeResult(
             guard_country=guard_country,
             guard_country_code=country_code,
@@ -372,9 +335,6 @@ class OriginScopeEstimator:
         return result
 
 
-# ============================================================================
-# Convenience Functions
-# ============================================================================
 
 def estimate_origin_scope(
     guard_country: str,
@@ -411,16 +371,12 @@ def estimate_origin_scope(
     return result.to_dict()
 
 
-# ============================================================================
-# Testing
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 70)
     print("ORIGIN SCOPE ESTIMATION MODULE - TEST")
     print("=" * 70)
     
-    # Test with VPS hosting
     print("\n--- Test 1: Guard on VPS (DigitalOcean) ---")
     result1 = estimate_origin_scope(
         guard_country="Germany",
@@ -432,7 +388,6 @@ if __name__ == "__main__":
     print(f"Confidence: {result1['confidence_level']}")
     print(f"Radius: {result1['regional_radius_description']}")
     
-    # Test with residential ISP
     print("\n--- Test 2: Guard on Residential ISP (Comcast) ---")
     result2 = estimate_origin_scope(
         guard_country="United States",
@@ -444,7 +399,6 @@ if __name__ == "__main__":
     print(f"Confidence: {result2['confidence_level']}")
     print(f"Radius: {result2['regional_radius_description']}")
     
-    # Test with academic network
     print("\n--- Test 3: Guard on Academic Network ---")
     result3 = estimate_origin_scope(
         guard_country="Netherlands",

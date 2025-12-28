@@ -32,15 +32,12 @@ class PCAPTypeDetector:
     4. Traffic directionality
     """
     
-    # Tor-specific constants
     TOR_OR_PORTS = {9001, 9030, 9051}  # Standard Tor ports
     TOR_CELL_SIZE_MIN = 500
     TOR_CELL_SIZE_MAX = 600
     
-    # Standard application ports (exit-side traffic)
     APPLICATION_PORTS = {80, 443, 8080, 8443}
     
-    # Private IP prefixes (indicate local/client side)
     PRIVATE_IP_PREFIXES = (
         '10.', '192.168.', '172.16.', '172.17.', '172.18.', '172.19.',
         '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
@@ -92,7 +89,6 @@ class PCAPTypeDetector:
         """
         logger.info(f"📊 Detecting PCAP type: {pcap_path}")
         
-        # Parse PCAP
         parser = PCAPParser(min_packets=2)
         try:
             flows = parser.parse_pcap(pcap_path)
@@ -111,13 +107,10 @@ class PCAPTypeDetector:
                 'evidence': {'error': 'No flows extracted'}
             }
         
-        # Collect evidence
         evidence = self._collect_evidence(flows)
         
-        # Score and determine type
         entry_score, exit_score = self._calculate_scores(evidence)
         
-        # Determine type based on scores
         if entry_score > exit_score and entry_score > 0.3:
             pcap_type = 'entry'
             confidence = min(entry_score, 1.0)
@@ -156,31 +149,26 @@ class PCAPTypeDetector:
         }
         
         for flow_id, flow_session in flows.items():
-            # Parse flow ID: srcIP:port-dstIP:port-protocol
             src_ip, src_port, dst_ip, dst_port = self._parse_flow_id(flow_id)
             
             if not src_ip or not dst_ip:
                 continue
             
-            # Track unique IPs (excluding private)
             for ip in [src_ip, dst_ip]:
                 if not ip.startswith(self.PRIVATE_IP_PREFIXES):
                     evidence['unique_ips'].add(ip)
             
-            # Check port patterns
             if src_port in self.TOR_OR_PORTS or dst_port in self.TOR_OR_PORTS:
                 evidence['tor_port_flows'] += 1
             
             if src_port in self.APPLICATION_PORTS or dst_port in self.APPLICATION_PORTS:
                 evidence['app_port_flows'] += 1
             
-            # Check private IP position (entry-side: private as src, exit-side: private as dst)
             if src_ip.startswith(self.PRIVATE_IP_PREFIXES):
                 evidence['private_ip_as_src'] += 1
             if dst_ip.startswith(self.PRIVATE_IP_PREFIXES):
                 evidence['private_ip_as_dst'] += 1
             
-            # Count Tor cell-sized packets
             if hasattr(flow_session, 'ingress_packets'):
                 for ts, size in flow_session.ingress_packets:
                     evidence['total_packets'] += 1
@@ -193,7 +181,6 @@ class PCAPTypeDetector:
                     if self.TOR_CELL_SIZE_MIN <= size <= self.TOR_CELL_SIZE_MAX:
                         evidence['tor_cell_packets'] += 1
             
-            # Check Tor consensus for relay roles
             if self.consensus_available:
                 for ip in [src_ip, dst_ip]:
                     if ip.startswith(self.PRIVATE_IP_PREFIXES):
@@ -207,10 +194,8 @@ class PCAPTypeDetector:
                         if 'Exit' in flags:
                             evidence['exit_ips'] += 1
                     else:
-                        # Non-Tor IP (potential exit destination)
                         evidence['non_tor_destinations'] += 1
         
-        # Convert set to count
         evidence['unique_ips'] = len(evidence['unique_ips'])
         
         return evidence
@@ -243,55 +228,40 @@ class PCAPTypeDetector:
         guard_ips = evidence.get('guard_ips', 0)
         exit_ips = evidence.get('exit_ips', 0)
         
-        # === CONSENSUS-BASED DETECTION (PRIMARY) ===
-        # This is the most reliable indicator
         
-        # Entry-side: Guard IPs detected in consensus (STRONG signal)
         if guard_ips > 0:
             entry_score += 0.50 * min(guard_ips / unique_ips + 0.5, 1.0)
         
-        # Exit-side: Exit IPs detected in consensus (STRONG signal)
         if exit_ips > 0:
             exit_score += 0.50 * min(exit_ips / unique_ips + 0.5, 1.0)
         
-        # === DECISIVE LOGIC ===
-        # If we see guards but NO exits, this is almost certainly entry-side
         if guard_ips > 0 and exit_ips == 0:
             entry_score += 0.30  # Strong boost for entry
             exit_score *= 0.3   # Penalize exit score
         
-        # If we see exits but NO guards, this is almost certainly exit-side
         if exit_ips > 0 and guard_ips == 0:
             exit_score += 0.30  # Strong boost for exit
             entry_score *= 0.3  # Penalize entry score
         
-        # === PORT-BASED DETECTION (SECONDARY) ===
-        # Only relevant when consensus doesn't give a clear answer
         
-        # Tor OR ports (entry-side indicator)
         if evidence['tor_port_flows'] > 0:
             tor_port_ratio = evidence['tor_port_flows'] / total_flows
             entry_score += 0.15 * min(tor_port_ratio * 2, 1.0)
         
-        # Application ports (exit-side indicator) - ONLY if exit IPs present
         if evidence['app_port_flows'] > 0 and exit_ips > 0:
             app_port_ratio = evidence['app_port_flows'] / total_flows
             exit_score += 0.15 * min(app_port_ratio * 2, 1.0)
         
-        # === PACKET-BASED DETECTION (WEAK) ===
         
-        # Tor cell-sized packets (entry-side indicator)
         if evidence['tor_cell_packets'] > 0:
             cell_ratio = evidence['tor_cell_packets'] / total_packets
             entry_score += 0.10 * min(cell_ratio * 2, 1.0)
         
-        # Private IP directionality
         if evidence['private_ip_as_src'] > evidence['private_ip_as_dst']:
             entry_score += 0.10
         elif evidence['private_ip_as_dst'] > evidence['private_ip_as_src']:
             exit_score += 0.10
         
-        # Normalize
         entry_score = min(entry_score, 1.0)
         exit_score = min(exit_score, 1.0)
         
@@ -304,11 +274,9 @@ class PCAPTypeDetector:
             if len(parts) < 2:
                 return None, 0, None, 0
             
-            # Handle srcIP:port-dstIP:port-protocol format
             src_part = parts[0]
             dst_part = parts[1]
             
-            # Extract IP and port
             if ':' in src_part:
                 src_ip = src_part.rsplit(':', 1)[0]
                 src_port = int(src_part.rsplit(':', 1)[1])
@@ -348,7 +316,6 @@ class PCAPTypeDetector:
         return []
 
 
-# Convenience function for direct usage
 def detect_pcap_type(pcap_path: str) -> str:
     """
     Quick detection function.

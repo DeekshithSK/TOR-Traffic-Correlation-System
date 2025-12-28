@@ -108,7 +108,6 @@ class ExitNodeAggregator:
         elif indirect_score > 0:
             record['indirect_matches'] += 1
         
-        # Keep limited timestamp history
         record['timestamps'].append(timestamp)
         if len(record['timestamps']) > 50:
             record['timestamps'] = record['timestamps'][-50:]
@@ -139,7 +138,6 @@ class ExitNodeAggregator:
         avg_direct = record['total_direct_score'] / count
         match_ratio = record['direct_matches'] / count
         
-        # Logarithmic boost + match ratio bonus
         score = np.log1p(count) * avg_direct * (1 + match_ratio)
         return float(score)
 
@@ -164,7 +162,6 @@ class ExitNodeAggregator:
             avg_indirect = data['total_indirect_score'] / count if count > 0 else 0
             match_ratio = data['direct_matches'] / count if count > 0 else 0
             
-            # Score with logarithmic dampening
             score = np.log1p(count) * avg_direct * (1 + match_ratio)
             
             ranked.append({
@@ -192,7 +189,6 @@ class ExitNodeAggregator:
 
 
 if __name__ == "__main__":
-    # Test code
     aggregator = ExitNodeAggregator("data/test_exit_evidence.json")
     aggregator.clear_evidence()
     

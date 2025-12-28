@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SUMo Filtering Pipeline - Main Entry Point
 
@@ -25,12 +24,10 @@ from datetime import datetime
 from typing import Dict, List, Optional
 import shutil
 
-# Import our modules
 from pcap_processor import PCAPParser
 from sumo_adapter import FlowFeatureExtractor
 from sumo_filter import load_default_pipeline
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -64,7 +61,6 @@ class SUMoFilteringPipeline:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.log_type = log_type
         
-        # Create subdirectories
         self.flows_dir = self.output_dir / 'flows'
         self.filtered_dir = self.output_dir / 'filtered_flows'
         self.metrics_dir = self.output_dir / 'metrics'
@@ -72,12 +68,10 @@ class SUMoFilteringPipeline:
         for d in [self.flows_dir, self.filtered_dir, self.metrics_dir]:
             d.mkdir(parents=True, exist_ok=True)
         
-        # Initialize components
         logger.info("Initializing pipeline components...")
         self.feature_extractor = FlowFeatureExtractor()
         self.sumo_pipeline = load_default_pipeline(sumo_base_path)
         
-        # Metrics storage
         self.metrics = {
             'pipeline_start': datetime.now().isoformat(),
             'stages': {}
@@ -103,14 +97,12 @@ class SUMoFilteringPipeline:
         
         stage_start = datetime.now()
         
-        # Parse PCAP and extract flows
         logger.info(f"Processing PCAP: {pcap_path}")
         logger.info(f"Log type: {self.log_type}")
         
         parser = PCAPParser(pcap_path, log_type=self.log_type)
         flows = parser.extract_flows()
         
-        # Save flows to inflow/outflow directories
         inflow_dir = self.flows_dir / 'inflow'
         outflow_dir = self.flows_dir / 'outflow'
         inflow_dir.mkdir(parents=True, exist_ok=True)
@@ -121,13 +113,11 @@ class SUMoFilteringPipeline:
             flow_id = flow.get_flow_id()
             flow_ids.append(flow_id)
             
-            # Save inflow (packets TO monitored host)
             inflow_data = flow.get_inflow_data()  # [(timestamp, size), ...]
             with open(inflow_dir / flow_id, 'w') as f:
                 for ts, size in inflow_data:
                     f.write(f"{ts}\t{size}\n")
             
-            # Save outflow (packets FROM monitored host)
             outflow_data = flow.get_outflow_data()
             with open(outflow_dir / flow_id, 'w') as f:
                 for ts, size in outflow_data:
@@ -170,7 +160,6 @@ class SUMoFilteringPipeline:
         
         stage_start = datetime.now()
         
-        # Extract features
         logger.info(f"Processing flows from: {self.flows_dir}")
         features_df = self.feature_extractor.process_flow_directory(str(self.flows_dir))
         
@@ -219,7 +208,6 @@ class SUMoFilteringPipeline:
                 inflow_path = str(inflow_dir / flow_id)
                 outflow_path = str(outflow_dir / flow_id)
                 
-                # Read raw data
                 inflow_data = np.loadtxt(inflow_path, delimiter='\t')
                 outflow_data = np.loadtxt(outflow_path, delimiter='\t')
                 
@@ -271,7 +259,6 @@ class SUMoFilteringPipeline:
         
         stage_start = datetime.now()
         
-        # Run filtering (BLACK BOX)
         logger.info(f"Thresholds: source={source_threshold}, target={target_threshold}")
         results = self.sumo_pipeline.run_filtering(
             features_df,
@@ -284,7 +271,6 @@ class SUMoFilteringPipeline:
         stage_duration = (datetime.now() - stage_start).total_seconds()
         results['duration_seconds'] = stage_duration
         
-        # Log reduction metrics (judges love metrics!)
         logger.info(f"\n📊 FILTERING METRICS:")
         logger.info(f"   Total input flows:     {results['total_flows']}")
         logger.info(f"   Filtered output flows: {results['filtered_count']}")
@@ -298,7 +284,6 @@ class SUMoFilteringPipeline:
         logger.info(f"     OS sessions:   {results['target_separation']['filtered_count']}")
         logger.info(f"     Fallback used: {results['target_separation']['fallback_used']}")
         
-        # Store metrics
         self.metrics['stages']['sumo_filtering'] = {
             'total_flows': results['total_flows'],
             'filtered_flows': results['filtered_count'],
@@ -338,11 +323,9 @@ class SUMoFilteringPipeline:
         
         stage_start = datetime.now()
         
-        # Copy filtered flows to output directory
         filtered_flow_ids = filtering_results['filtered_flow_ids']
         
         if len(filtered_flow_ids) > 0:
-            # Copy original flow files
             filtered_inflow_dir = self.filtered_dir / 'inflow'
             filtered_outflow_dir = self.filtered_dir / 'outflow'
             filtered_inflow_dir.mkdir(parents=True, exist_ok=True)
@@ -361,7 +344,6 @@ class SUMoFilteringPipeline:
             
             logger.info(f"✅ Copied {len(filtered_flow_ids)} filtered flows to {self.filtered_dir}")
         
-        # Generate JSON manifest for ESPRESSO
         espresso_manifest = {
             'timestamp': datetime.now().isoformat(),
             'pipeline_version': '1.0.0',
@@ -387,7 +369,6 @@ class SUMoFilteringPipeline:
             }
         }
         
-        # Save manifest
         manifest_path = self.filtered_dir / 'espresso_manifest.json'
         with open(manifest_path, 'w') as f:
             json.dump(espresso_manifest, f, indent=2)
@@ -441,16 +422,12 @@ class SUMoFilteringPipeline:
         logger.info(f"Output directory: {self.output_dir}")
         
         try:
-            # Stage 1: PCAP Processing
             pcap_results = self.process_pcap(pcap_path)
             
-            # Stage 2: Feature Extraction
             feature_results = self.extract_sumo_features()
             
-            # Create flow store
             flow_store = self.create_flow_store(pcap_results['flow_ids'])
             
-            # Stage 3: SUMo Filtering (BLACK BOX)
             filtering_results = self.run_sumo_filtering(
                 feature_results['features_df'],
                 flow_store,
@@ -459,13 +436,10 @@ class SUMoFilteringPipeline:
                 fallback_top_k=fallback_top_k
             )
             
-            # Stage 4: ESPRESSO Output
             manifest_path = self.save_espresso_output(filtering_results)
             
-            # Save metrics
             metrics_path = self.save_metrics()
             
-            # Final summary
             logger.info("\n" + "="*70)
             logger.info("PIPELINE COMPLETE ✅")
             logger.info("="*70)
@@ -502,14 +476,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic usage
   python run_sumo_pipeline.py --pcap input.pcap --output ./results/
 
-  # With custom thresholds
   python run_sumo_pipeline.py --pcap input.pcap --output ./results/ \\
       --source-threshold 0.01 --target-threshold 0.85
 
-  # For ISP log format
   python run_sumo_pipeline.py --pcap isp.pcap --output ./results/ --log-type isp
 
 Output:
@@ -535,12 +506,10 @@ Output:
     
     args = parser.parse_args()
     
-    # Validate inputs
     if not os.path.exists(args.pcap):
         print(f"Error: PCAP file not found: {args.pcap}")
         sys.exit(1)
     
-    # Run pipeline
     pipeline = SUMoFilteringPipeline(
         output_dir=args.output,
         log_type=args.log_type,

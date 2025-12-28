@@ -31,7 +31,7 @@ export default function Header({ caseId, systemStatus = 'online' }) {
             <div className="container mx-auto px-6">
                 <div className="flex items-center justify-between h-14">
 
-                    {/* Left: Logo & Title */}
+                    {}
                     <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="relative">
                             <div className="w-9 h-9 rounded-lg gradient-ops flex items-center justify-center">
@@ -49,7 +49,7 @@ export default function Header({ caseId, systemStatus = 'online' }) {
                         </div>
                     </div>
 
-                    {/* Center: Status Indicators */}
+                    {}
                     <div className="flex items-center gap-4">
                         <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-ops-panel border border-ops-border">
                             <div className={`w-1.5 h-1.5 rounded-full ${systemStatus === 'online' ? 'bg-secure animate-pulse' : 'bg-threat'}`} />
@@ -70,7 +70,7 @@ export default function Header({ caseId, systemStatus = 'online' }) {
                         </div>
                     </div>
 
-                    {/* Right: Time & Case ID */}
+                    {}
                     <div className="flex items-center gap-4 flex-shrink-0">
                         {caseId && (
                             <div className="hidden md:block px-2 py-1 rounded bg-ops-panel border border-ops-border">

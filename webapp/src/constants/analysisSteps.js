@@ -1,4 +1,3 @@
-// Analysis pipeline steps configuration
 export const ANALYSIS_STEPS = [
     {
         title: 'Evidence Ingestion',

@@ -36,7 +36,6 @@ from collections import defaultdict
 
 import config
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -44,22 +43,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# Configuration
-# ============================================================================
 
 TOR_CONSENSUS_URL = "https://collector.torproject.org/recent/relay-descriptors/consensuses/"
 TOR_CONSENSUS_CACHE_DIR = config.DATA_DIR / "tor_consensus_cache"
 TOR_CONSENSUS_CACHE_TTL_HOURS = 6
 TOR_PATH_SAMPLE_COUNT = 3000  # Default simulation sample count
 
-# Ensure cache directory exists
 TOR_CONSENSUS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# ============================================================================
-# Data Classes
-# ============================================================================
 
 @dataclass
 class RelayInfo:
@@ -116,9 +108,6 @@ class PathInferenceResult:
     inference_metadata: Dict[str, Any]
 
 
-# ============================================================================
-# Tor Consensus Client
-# ============================================================================
 
 class TorConsensusClient:
     """
@@ -166,12 +155,10 @@ class TorConsensusClient:
         meta_path = self._get_cache_meta_path()
         
         try:
-            # Save relay data
             relay_data = {fp: asdict(relay) for fp, relay in relays.items()}
             with open(cache_path, 'w') as f:
                 json.dump(relay_data, f)
             
-            # Save metadata
             meta = {
                 'timestamp': datetime.now().isoformat(),
                 'relay_count': len(relays),
@@ -211,8 +198,6 @@ class TorConsensusClient:
             response = requests.get(TOR_CONSENSUS_URL, timeout=30)
             response.raise_for_status()
             
-            # Parse directory listing to find latest consensus file
-            # Files are named like: 2025-12-18-12-00-00-consensus
             pattern = r'href="(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-consensus)"'
             matches = re.findall(pattern, response.text)
             
@@ -220,7 +205,6 @@ class TorConsensusClient:
                 logger.error("No consensus files found in directory listing")
                 return None
             
-            # Get the latest file
             latest_file = sorted(matches)[-1]
             return f"{TOR_CONSENSUS_URL}{latest_file}"
         except Exception as e:
@@ -237,13 +221,10 @@ class TorConsensusClient:
         for line in lines:
             line = line.strip()
             
-            # Router line: r <nickname> <identity> <digest> <date> <time> <IP> <ORPort> <DirPort>
-            # Example: r seele AAoQ1DAR6kkoo19hBAX5K0QztNw LNrZ8YA4... 2025-12-18 06:18:04 152.53.144.50 443 0
             if line.startswith('r '):
                 parts = line.split()
                 if len(parts) >= 9:  # Need at least 9 parts
                     nickname = parts[1]
-                    # Identity is base64 encoded, convert to hex fingerprint
                     try:
                         import base64
                         identity_b64 = parts[2] + '=' * (4 - len(parts[2]) % 4)
@@ -252,7 +233,6 @@ class TorConsensusClient:
                     except:
                         fingerprint = hashlib.sha1(parts[2].encode()).hexdigest().upper()
                     
-                    # parts[3] = digest, parts[4] = date, parts[5] = time
                     ip_address = parts[6]  # IP is at index 6
                     or_port = int(parts[7])  # ORPort at index 7
                     dir_port = int(parts[8])  # DirPort at index 8
@@ -267,17 +247,14 @@ class TorConsensusClient:
                         'bandwidth': 0
                     }
             
-            # Flags line: s <flag1> <flag2> ...
             elif line.startswith('s ') and current_relay:
                 current_relay['flags'] = line[2:].split()
             
-            # Bandwidth line: w Bandwidth=<value>
             elif line.startswith('w ') and current_relay:
                 match = re.search(r'Bandwidth=(\d+)', line)
                 if match:
                     current_relay['bandwidth'] = int(match.group(1))
                 
-                # This is typically the last line for a relay entry
                 relay = RelayInfo(**current_relay)
                 relays[relay.fingerprint] = relay
                 current_relay = None
@@ -295,7 +272,6 @@ class TorConsensusClient:
         Returns:
             True if consensus was loaded successfully
         """
-        # Try cache first
         if not force_refresh and self._is_cache_valid():
             cached = self._load_from_cache()
             if cached:
@@ -304,10 +280,8 @@ class TorConsensusClient:
                 self._load_cache_timestamp()
                 return True
         
-        # Fetch fresh consensus
         consensus_url = self._fetch_latest_consensus_url()
         if not consensus_url:
-            # Fallback to cache even if expired
             cached = self._load_from_cache()
             if cached:
                 logger.warning("Using expired cache due to fetch failure")
@@ -325,13 +299,11 @@ class TorConsensusClient:
             self._index_relays()
             self._consensus_timestamp = datetime.now()
             
-            # Cache the result
             self._save_to_cache(self._relays)
             
             return True
         except Exception as e:
             logger.error(f"Failed to fetch consensus: {e}")
-            # Fallback to cache
             cached = self._load_from_cache()
             if cached:
                 logger.warning("Using cached data due to fetch failure")
@@ -381,9 +353,6 @@ class TorConsensusClient:
         return self._consensus_timestamp
 
 
-# ============================================================================
-# Path Probability Estimator
-# ============================================================================
 
 class PathProbabilityEstimator:
     """
@@ -437,13 +406,11 @@ class PathProbabilityEstimator:
             logger.warning("No exit relays found in consensus")
             return []
         
-        # Exclude guard from exit selection (Tor doesn't use same relay twice)
         if guard_fingerprint:
             exits = [e for e in exits if e.fingerprint != guard_fingerprint]
         if guard_ip:
             exits = [e for e in exits if e.ip_address != guard_ip]
         
-        # Calculate weights
         weights = []
         for exit_relay in exits:
             weight = self._calculate_exit_weight(exit_relay)
@@ -454,13 +421,10 @@ class PathProbabilityEstimator:
             logger.warning("Total exit weight is zero")
             return []
         
-        # Normalize weights to probabilities
         probabilities = [w / total_weight for w in weights]
         
-        # Simulate path selection
         selection_counts = defaultdict(int)
         for _ in range(sample_count):
-            # Random weighted selection
             r = random.random()
             cumulative = 0
             for i, prob in enumerate(probabilities):
@@ -469,7 +433,6 @@ class PathProbabilityEstimator:
                     selection_counts[i] += 1
                     break
         
-        # Convert to ExitCandidate objects with empirical probabilities
         candidates = []
         for i, exit_relay in enumerate(exits):
             if selection_counts[i] > 0:
@@ -484,16 +447,11 @@ class PathProbabilityEstimator:
                     flags=exit_relay.flags
                 ))
         
-        # Sort by probability descending
         candidates.sort(key=lambda x: x.probability, reverse=True)
         
-        # Return top candidates (limit to reasonable number)
         return candidates[:50]
 
 
-# ============================================================================
-# Main Tor Path Inference Class
-# ============================================================================
 
 class TorPathInference:
     """
@@ -546,12 +504,10 @@ class TorPathInference:
         
         relays = self.consensus_client.get_relays_by_ip(guard_ip)
         
-        # Return the guard relay if found
         guards = [r for r in relays if r.is_guard]
         if guards:
             return guards[0]
         
-        # Return any relay at that IP if no guard flag
         if relays:
             return relays[0]
         
@@ -582,7 +538,6 @@ class TorPathInference:
         if not self._initialized:
             self.initialize()
         
-        # Lookup guard in consensus
         guard_relay = self.lookup_guard(guard_ip)
         
         guard_info = {
@@ -596,24 +551,20 @@ class TorPathInference:
             'label': 'Guard Relay (Inferred)'
         }
         
-        # Tor core is always a placeholder
         tor_core_info = {
             'label': 'Tor Network (Hidden by Design)',
             'description': 'Middle relays cannot be observed or inferred',
             'is_observable': False
         }
         
-        # Estimate exit probabilities
         exit_candidates = self.probability_estimator.estimate_exit_probabilities(
             guard_fingerprint=guard_relay.fingerprint if guard_relay else None,
             guard_ip=guard_ip,
             sample_count=sample_count
         )
         
-        # Calculate total exit bandwidth for metadata
         total_exit_bw = sum(e.bandwidth for e in exit_candidates)
         
-        # Convert to dicts for JSON serialization
         exit_list = []
         for candidate in exit_candidates:
             exit_list.append({
@@ -627,19 +578,15 @@ class TorPathInference:
                 'label': 'Possible Exit Relay (Probabilistic)'
             })
         
-        # Confidence aggregation
-        # RULE: torps does NOT increase confidence by itself
         final_confidence = guard_confidence
         confidence_boost = 0.0
         
         if exit_evidence:
-            # Exit-side correlation may increase confidence
             exit_match_score = exit_evidence.get('match_score', 0)
             if exit_match_score > 0.5:
                 confidence_boost = min(0.15, exit_match_score * 0.2)
                 final_confidence = min(1.0, guard_confidence + confidence_boost)
         
-        # Build metadata
         inference_metadata = {
             'sample_count': sample_count,
             'guard_in_consensus': guard_relay is not None,
@@ -672,7 +619,6 @@ class TorPathInference:
         nodes = []
         edges = []
         
-        # Client node
         nodes.append({
             'id': 'client',
             'type': 'client',
@@ -681,7 +627,6 @@ class TorPathInference:
             'data': {}
         })
         
-        # Guard node
         nodes.append({
             'id': 'guard',
             'type': 'guard',
@@ -690,7 +635,6 @@ class TorPathInference:
             'data': result.guard
         })
         
-        # Tor core node
         nodes.append({
             'id': 'tor_core',
             'type': 'tor_core',
@@ -699,7 +643,6 @@ class TorPathInference:
             'data': result.tor_core
         })
         
-        # Exit nodes (top 5 for visualization)
         for i, exit_candidate in enumerate(result.exit_candidates[:5]):
             nodes.append({
                 'id': f'exit_{i}',
@@ -710,8 +653,6 @@ class TorPathInference:
                 'data': exit_candidate
             })
         
-        # Edges
-        # Client -> Guard (solid, traffic-inferred)
         edges.append({
             'source': 'client',
             'target': 'guard',
@@ -720,7 +661,6 @@ class TorPathInference:
             'confidence': result.guard['confidence']
         })
         
-        # Guard -> Tor Core (dashed, inferred boundary)
         edges.append({
             'source': 'guard',
             'target': 'tor_core',
@@ -728,7 +668,6 @@ class TorPathInference:
             'label': 'Inferred Boundary'
         })
         
-        # Tor Core -> Exits (dotted, probabilistic)
         for i, exit_candidate in enumerate(result.exit_candidates[:5]):
             edges.append({
                 'source': 'tor_core',
@@ -747,9 +686,6 @@ class TorPathInference:
         }
 
 
-# ============================================================================
-# Convenience Functions
-# ============================================================================
 
 def create_path_inference() -> TorPathInference:
     """Factory function to create initialized TorPathInference instance."""
@@ -792,16 +728,12 @@ def infer_path_from_guard(guard_ip: str,
     }
 
 
-# ============================================================================
-# Testing
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 70)
     print("Tor Path Inference Module - Test")
     print("=" * 70)
     
-    # Initialize
     print("\n📡 Initializing Tor consensus client...")
     inference = TorPathInference()
     
@@ -811,7 +743,6 @@ if __name__ == "__main__":
     
     print(f"✅ Loaded {inference.consensus_client.relay_count} relays")
     
-    # Test guard lookup
     print("\n🔍 Testing guard lookup...")
     test_ip = "51.159.211.57"  # Example TOR guard IP
     guard = inference.lookup_guard(test_ip)
@@ -821,7 +752,6 @@ if __name__ == "__main__":
     else:
         print(f"   No relay found at {test_ip}")
     
-    # Test path estimation
     print("\n🛤️ Testing path estimation...")
     result = inference.estimate_path(
         guard_ip=test_ip,
@@ -839,7 +769,6 @@ if __name__ == "__main__":
     for i, exit_cand in enumerate(result.exit_candidates[:5], 1):
         print(f"      {i}. {exit_cand['nickname']} ({exit_cand['ip']}) - {exit_cand['probability']:.2%}")
     
-    # Test graph format
     print("\n📊 Testing graph format...")
     graph = inference.to_graph_format(result)
     print(f"   Nodes: {len(graph['nodes'])}")

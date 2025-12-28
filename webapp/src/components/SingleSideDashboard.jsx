@@ -3,10 +3,6 @@ import {
     Target, Server, Shield, Activity, Zap, Globe, Database, TrendingUp
 } from 'lucide-react';
 
-/**
- * Single-Side PCAP Analysis Dashboard
- * Displays results when only one PCAP (entry OR exit) is analyzed
- */
 export default function SingleSideDashboard({ results }) {
     const isExitMode = results.analysis_mode === 'exit_only';
     const correlation = results.correlation || {};
@@ -21,7 +17,7 @@ export default function SingleSideDashboard({ results }) {
             animate={{ opacity: 1, y: 0 }}
             style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
-            {/* Mode Header */}
+            {}
             <div
                 className="panel"
                 style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}
@@ -68,13 +64,13 @@ export default function SingleSideDashboard({ results }) {
                 </div>
             </div>
 
-            {/* Main Grid - 3 Columns */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
 
-                {/* LEFT: Primary Finding */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                    {/* Probable Guard Nodes (Exit Mode) */}
+                    {}
                     {isExitMode && probableGuards.length > 0 && (
                         <div className="panel" style={{ padding: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -114,7 +110,7 @@ export default function SingleSideDashboard({ results }) {
                         </div>
                     )}
 
-                    {/* Inferred Guard (Entry Mode) */}
+                    {}
                     {!isExitMode && results.top_finding && (
                         <div className="panel" style={{ padding: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -141,10 +137,10 @@ export default function SingleSideDashboard({ results }) {
                     )}
                 </div>
 
-                {/* CENTER: Exit Nodes / Flow Stats */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                    {/* Detected Exit Nodes */}
+                    {}
                     <div className="panel" style={{ padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <Server style={{ width: '1rem', height: '1rem', color: '#3b82f6' }} />
@@ -173,7 +169,7 @@ export default function SingleSideDashboard({ results }) {
                         )}
                     </div>
 
-                    {/* Flow Fingerprint */}
+                    {}
                     {isExitMode && (
                         <div className="panel" style={{ padding: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -202,10 +198,10 @@ export default function SingleSideDashboard({ results }) {
                     )}
                 </div>
 
-                {/* RIGHT: Traffic Profile */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                    {/* Traffic Profile */}
+                    {}
                     <div className="panel" style={{ padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <Activity style={{ width: '1rem', height: '1rem', color: '#67d4ff' }} />
@@ -235,7 +231,7 @@ export default function SingleSideDashboard({ results }) {
                         </div>
                     </div>
 
-                    {/* Analysis Summary */}
+                    {}
                     <div
                         className="panel"
                         style={{

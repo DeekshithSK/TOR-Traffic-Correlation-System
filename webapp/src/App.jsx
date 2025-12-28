@@ -8,7 +8,6 @@ import {
   Target, Radio, Eye, Lock, Crosshair, Zap
 } from 'lucide-react'
 
-// Components
 import Header from './components/Header'
 import GlassCard, { CardHeader, CardBody, CardFooter } from './components/GlassCard'
 import StatusBadge, { ThreatLevelBadge } from './components/StatusBadge'
@@ -25,7 +24,6 @@ import DualSideDashboard from './components/DualSideDashboard'
 import { ANALYSIS_STEPS } from './constants/analysisSteps'
 import { ConfidenceMetric } from './components/MetricCard'
 
-// API Configuration
 const API_BASE = 'http://localhost:8000/api';
 
 function App() {
@@ -43,7 +41,6 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false); // PCAP upload loading state
 
-  // --- File Upload Handler ---
   const handleFileUpload = async (event) => {
     const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
     if (!file) return;
@@ -71,7 +68,6 @@ function App() {
     }
   };
 
-  // --- Exit File Upload Handler (for guard_exit mode) ---
   const handleExitFileUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -96,7 +92,6 @@ function App() {
     }
   };
 
-  // --- Drag and Drop ---
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -110,13 +105,11 @@ function App() {
     handleFileUpload(e);
   };
 
-  // --- Analysis Handler ---
   const startAnalysis = async () => {
     setView('processing');
     setLoadingStep(0);
     setError(null);
 
-    // Build analysis request with mode
     console.log('DEBUG: exitFileData =', exitFileData);
     console.log('DEBUG: correlationMode =', correlationMode);
 
@@ -127,27 +120,22 @@ function App() {
 
     console.log('DEBUG: params =', params.toString());
 
-    // Run animation and API call IN PARALLEL
     const animationPromise = (async () => {
       for (let i = 0; i < ANALYSIS_STEPS.length; i++) {
         setLoadingStep(i);
-        // Last step (100%) only waits 1 second, others wait 4 seconds
         const delay = (i === ANALYSIS_STEPS.length - 1) ? 1000 : 4000;
         await new Promise(r => setTimeout(r, delay));
       }
     })();
 
     try {
-      // API call runs at the same time as animation
       const res = await axios.post(`${API_BASE}/analyze/${caseInfo.case_id}?${params}`);
 
-      // Wait for animation to finish (if API was faster)
       await animationPromise;
 
       setAnalysisResults(res.data);
       setView('results');
     } catch (err) {
-      // Cancel animation wait on error
       const errorMsg = err.response?.data?.detail
         || err.response?.data?.error
         || "Analysis pipeline failed. Please check the PCAP file and try again.";
@@ -156,7 +144,6 @@ function App() {
     }
   };
 
-  // --- Report Download ---
   const downloadReport = async () => {
     try {
       const res = await axios.post(`${API_BASE}/report`, {
@@ -180,7 +167,6 @@ function App() {
     }
   };
 
-  // --- Reset ---
   const resetAnalysis = () => {
     setFileData(null);
     setAnalysisResults(null);
@@ -192,21 +178,21 @@ function App() {
   return (
     <div className="relative w-full min-h-screen text-white font-inter overflow-x-hidden">
 
-      {/* Grid Overlay */}
+      {}
       <div className="fixed inset-0 grid-bg pointer-events-none opacity-50 z-0" />
 
-      {/* Gradient Overlay */}
+      {}
       <div className="fixed inset-0 bg-gradient-to-b from-ops-black/80 via-transparent to-ops-black/90 pointer-events-none z-0" />
 
-      {/* Header - ensure highest z-index */}
+      {}
       <Header caseId={caseInfo.case_id} systemStatus="online" />
 
-      {/* Main Container - increased top padding for header clearance */}
+      {}
       <main className="relative z-10 w-full px-6 pt-20 pb-12">
 
         <AnimatePresence mode="wait">
 
-          {/* ===================== UPLOAD VIEW ===================== */}
+          {}
           {view === 'upload' && (
             <motion.div
               key="upload"
@@ -217,7 +203,7 @@ function App() {
             >
 
 
-              {/* Title Section */}
+              {}
               <div className="text-center mb-16">
                 <h1 className="text-5xl md:text-6xl font-bold text-white tracking-wide mb-4">
                   PRIME CORRELATION ENGINE
@@ -231,13 +217,13 @@ function App() {
                 </p>
               </div>
 
-              {/* Main Grid */}
+              {}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
 
-                {/* Left Column: Upload Zone */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                  {/* Case Info */}
+                  {}
                   <GlassCard variant="glow">
                     <CardHeader title="Investigation Details" icon={FileText} />
                     <CardBody>
@@ -269,9 +255,9 @@ function App() {
                     </CardBody>
                   </GlassCard>
 
-                  {/* Upload Zone - Conditional layout based on mode */}
+                  {}
                   {correlationMode === 'guard_only' ? (
-                    /* Single-Side PCAP: Original single upload zone */
+                    
                     <GlassCard
                       variant={isDragging ? 'glow' : 'default'}
                       className="relative overflow-hidden"
@@ -298,7 +284,7 @@ function App() {
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
 
-                        {/* Radar Animation */}
+                        {}
                         {!fileData && (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                             <div className="w-48 h-48 rounded-full border border-ops-cyan animate-ping" style={{ animationDuration: '3s' }} />
@@ -368,12 +354,12 @@ function App() {
                       </div>
                     </GlassCard>
                   ) : (
-                    /* Dual-Side PCAP: Two-column upload layout */
+                    
                     <GlassCard variant="glow" className="relative overflow-hidden">
                       <CardHeader title="Dual-Side PCAP Evidence" icon={Crosshair} />
                       <CardBody>
                         <div className="grid grid-cols-2 gap-4">
-                          {/* Entry/Guard Side PCAP */}
+                          {}
                           <div
                             className={`
                               relative min-h-[280px] border-2 border-dashed rounded-xl p-6
@@ -417,7 +403,7 @@ function App() {
                             </div>
                           </div>
 
-                          {/* Exit/Server Side PCAP */}
+                          {}
                           <div
                             className={`
                               relative min-h-[280px] border-2 border-dashed rounded-xl p-6
@@ -457,7 +443,7 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Start Analysis Button */}
+                        {}
                         {fileData && (
                           <button
                             onClick={startAnalysis}
@@ -471,7 +457,7 @@ function App() {
                     </GlassCard>
                   )}
 
-                  {/* Error Display */}
+                  {}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -485,9 +471,9 @@ function App() {
                 </div>
 
 
-                {/* Right Column: Mode & Protocol */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {/* Correlation Mode Switch */}
+                  {}
                   <GlassCard>
                     <CardBody>
                       <CorrelationModeSwitch
@@ -497,7 +483,7 @@ function App() {
                     </CardBody>
                   </GlassCard>
 
-                  {/* Protocol Steps */}
+                  {}
                   <GlassCard className="sticky top-24">
                     <CardHeader title="Operational Protocol" icon={Shield} />
                     <CardBody className="space-y-4">
@@ -547,7 +533,7 @@ function App() {
             </motion.div>
           )}
 
-          {/* ===================== PROCESSING VIEW ===================== */}
+          {}
           {view === 'processing' && (
             <motion.div
               key="processing"
@@ -560,7 +546,7 @@ function App() {
 
               <div className="max-w-2xl w-full mx-auto">
                 <GlassCard variant="glow" className="overflow-visible">
-                  {/* Classified Banner */}
+                  {}
                   <div className="bg-intel/10 border-b border-intel/30 px-6 py-3 flex items-center justify-center gap-3">
                     <Lock className="w-4 h-4 text-intel" />
                     <span className="text-sm font-bold text-intel uppercase tracking-widest">
@@ -614,7 +600,7 @@ function App() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              {/* Dashboard Header */}
+              {}
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -633,21 +619,21 @@ function App() {
                 </div>
               </div>
 
-              {/* Conditional Dashboard Rendering Based on Analysis Mode */}
+              {}
               <div style={{ padding: '2rem 1.5rem', marginTop: '1rem' }}>
                 {analysisResults.analysis_mode === 'exit_only' ? (
-                  /* Exit-Side PCAP Analysis Dashboard */
+                  
                   <ExitSideDashboard results={analysisResults} caseInfo={caseInfo} />
                 ) : analysisResults.analysis_mode === 'entry_only' ? (
-                  /* Entry-Side PCAP Analysis Dashboard */
+                  
                   <EntrySideDashboard results={analysisResults} caseInfo={caseInfo} />
                 ) : (
-                  /* Dual-Side PCAP Analysis Dashboard */
+                  
                   <DualSideDashboard results={analysisResults} caseInfo={caseInfo} />
                 )}
               </div>
 
-              {/* Legacy Grid - Hidden when using new dashboards */}
+              {}
               {false && (
                 <div
                   className="gap-8 py-6"
@@ -661,10 +647,10 @@ function App() {
                   }}
                 >
 
-                  {/* FIRST ROW: Key Findings - Guard, Exit, Entry-Exit Matching */}
+                  {}
                   <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
 
-                    {/* Inferred Guard Node (or Mode-Specific View) */}
+                    {}
                     <div className="panel p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Target className="w-4 h-4 text-ops-cyan" />
@@ -682,10 +668,10 @@ function App() {
                         )}
                       </div>
                       {analysisResults.analysis_mode === 'exit_only' ? (
-                        /* Exit-Only Mode: Show probable guard if detected */
+                        
                         <div className="space-y-3">
                           {analysisResults.correlation?.probable_guards?.length > 0 ? (
-                            /* Probable guard detected */
+                            
                             <>
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-xl">{analysisResults.correlation.probable_guards[0].flag || '🌐'}</span>
@@ -707,7 +693,7 @@ function App() {
                               </div>
                             </>
                           ) : (
-                            /* No guard detected */
+                            
                             <>
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-xl">📊</span>
@@ -725,7 +711,7 @@ function App() {
                           )}
                         </div>
                       ) : (
-                        /* Normal Mode: Show Guard Node */
+                        
                         <>
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-xl">{analysisResults.top_finding.flag || '🌐'}</span>
@@ -748,7 +734,7 @@ function App() {
                       )}
                     </div>
 
-                    {/* Inferred Exit Nodes (Top 3) */}
+                    {}
                     <div className="panel p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Server className="w-4 h-4 text-intel" />
@@ -796,7 +782,7 @@ function App() {
                       )}
                     </div>
 
-                    {/* Entry-Exit Matching Score */}
+                    {}
                     <div className="panel p-5 border-l-2 border-ops-cyan">
                       <div className="flex items-center gap-2 mb-3">
                         <CheckCircle className="w-4 h-4 text-ops-cyan" />
@@ -834,10 +820,10 @@ function App() {
                     </div>
                   </div>
 
-                  {/* LEFT COLUMN: Confidence + Evidence Details */}
+                  {}
                   <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                    {/* Confidence Indicator Card */}
+                    {}
                     <div className="panel p-6">
                       <div className="flex items-start gap-4">
                         <div className={`
@@ -883,7 +869,7 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Indirect Exit Evidence (if present but below confirmation threshold) */}
+                    {}
                     {analysisResults.correlation?.mode === 'guard+exit_indirect' && (
                       <div className="panel p-6 border-l-2 border-intel">
                         <div className="flex items-center gap-2 mb-4">
@@ -894,12 +880,12 @@ function App() {
                           </span>
                         </div>
 
-                        {/* Matched Flow Pair */}
+                        {}
                         {analysisResults.correlation?.observed_exit_flow && (
                           <div className="mb-4">
                             <p className="text-[9px] text-text-tertiary uppercase mb-2">Matched Flow Pair</p>
                             <div className="space-y-2 bg-ops-panel/50 rounded p-3">
-                              {/* Entry (Guard) Flow */}
+                              {}
                               {analysisResults.correlation?.matched_guard_flow && (
                                 <div className="flex items-center justify-between text-[11px] pb-2 border-b border-ops-border/50">
                                   <span className="text-text-tertiary">Entry Flow:</span>
@@ -908,7 +894,7 @@ function App() {
                                   </span>
                                 </div>
                               )}
-                              {/* Exit Flow */}
+                              {}
                               <div className="flex items-center justify-between text-[11px]">
                                 <span className="text-text-tertiary">Exit Flow:</span>
                                 <span className="font-mono text-white text-[10px] truncate max-w-[200px]" title={analysisResults.correlation.observed_exit_flow}>
@@ -937,7 +923,7 @@ function App() {
                           Partial confidence boost applied from circumstantial indicators.
                         </p>
 
-                        {/* Factor breakdown */}
+                        {}
                         {analysisResults.correlation?.indirect_evidence?.factor_scores && (
                           <div className="space-y-1.5 border-t border-ops-border pt-3">
                             {Object.entries(analysisResults.correlation.indirect_evidence.factor_scores).map(([factor, score]) => (
@@ -951,7 +937,7 @@ function App() {
                       </div>
                     )}
 
-                    {/* Guard-Exit Matches Panel (Entry-Exit Correlation) */}
+                    {}
                     {analysisResults.correlation?.guard_exit_pairs && analysisResults.correlation.guard_exit_pairs.length > 0 && (
                       <details className="panel group" open>
                         <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-ops-panel/50 transition-colors">
@@ -963,7 +949,7 @@ function App() {
                           <span className="text-text-muted text-xs hidden group-open:inline">Click to collapse</span>
                         </summary>
                         <div className="p-4 pt-0 border-t border-ops-border/50">
-                          {/* Header */}
+                          {}
                           <div className="bg-secure/10 border border-secure/30 rounded-lg px-3 py-2 mb-4">
                             <p className="text-[10px] text-secure leading-relaxed">
                               🔗 <b>GUARD-EXIT CORRELATION</b> — Entry PCAP guard nodes matched against exit PCAP traffic patterns.
@@ -971,7 +957,7 @@ function App() {
                             </p>
                           </div>
 
-                          {/* Pairs Table */}
+                          {}
                           <div className="space-y-2">
                             {analysisResults.correlation.guard_exit_pairs.slice(0, 10).map((pair, idx) => (
                               <div
@@ -982,13 +968,13 @@ function App() {
                                   }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  {/* Rank Badge */}
+                                  {}
                                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${pair.matched ? 'bg-secure text-white' : 'bg-ops-panel text-text-muted'
                                     }`}>
                                     {idx + 1}
                                   </span>
 
-                                  {/* Guard → Exit */}
+                                  {}
                                   <div className="flex items-center gap-2">
                                     <div>
                                       <span className="font-mono text-xs text-white">{pair.guard_ip && pair.guard_ip.length > 18 ? pair.guard_ip.slice(0, 18) + '...' : pair.guard_ip}</span>
@@ -1002,7 +988,7 @@ function App() {
                                   </div>
                                 </div>
 
-                                {/* Match Status & Combined Score */}
+                                {}
                                 <div className="flex items-center gap-3">
                                   <span className={`text-[10px] ${pair.matched ? 'text-secure' : 'text-text-muted'}`}>
                                     {pair.matched ? '✓ MATCHED' : '○ NO MATCH'}
@@ -1023,7 +1009,7 @@ function App() {
                       </details>
                     )}
 
-                    {/* IP Leads Panel (Forensic Intelligence) */}
+                    {}
                     {analysisResults.ip_leads && analysisResults.ip_leads.length > 0 && (
                       <details className="panel group" open>
                         <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-ops-panel/50 transition-colors">
@@ -1035,7 +1021,7 @@ function App() {
                           <span className="text-text-muted text-xs hidden group-open:inline">Click to collapse</span>
                         </summary>
                         <div className="p-4 pt-0 border-t border-ops-border/50">
-                          {/* IP Leads Header */}
+                          {}
                           <div className="bg-threat/10 border border-threat/30 rounded-lg px-3 py-2 mb-4">
                             <p className="text-[10px] text-threat leading-relaxed">
                               🎯 <b>ACTIONABLE IP LEADS</b> — Aggregated from correlated traffic flows.
@@ -1043,7 +1029,7 @@ function App() {
                             </p>
                           </div>
 
-                          {/* IP Leads Table */}
+                          {}
                           <div className="space-y-2">
                             {analysisResults.ip_leads.slice(0, 10).map((lead, idx) => (
                               <div
@@ -1054,13 +1040,13 @@ function App() {
                                   }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  {/* Rank Badge */}
+                                  {}
                                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx === 0 ? 'bg-threat text-white' : 'bg-ops-panel text-text-muted'
                                     }`}>
                                     {idx + 1}
                                   </span>
 
-                                  {/* IP Address */}
+                                  {}
                                   <div>
                                     <span className="font-mono text-sm text-white">{lead.ip}</span>
                                     <div className="text-[10px] text-text-muted">
@@ -1069,9 +1055,9 @@ function App() {
                                   </div>
                                 </div>
 
-                                {/* Confidence & Evidence */}
+                                {}
                                 <div className="flex items-center gap-4">
-                                  {/* Evidence Breakdown */}
+                                  {}
                                   <div className="text-right text-[10px]">
                                     <div className="text-text-tertiary">
                                       Stat: <span className="text-intel">{(lead.evidence?.avg_statistical * 100).toFixed(1)}%</span>
@@ -1081,7 +1067,7 @@ function App() {
                                         Siamese: <span className="text-intel">{(lead.evidence.avg_siamese * 100).toFixed(1)}%</span>
                                       </div>
                                     )}
-                                    {/* Exit Score - shown when in dual-side mode */}
+                                    {}
                                     {lead.exit_score !== undefined && lead.exit_score > 0 && (
                                       <div className="text-text-tertiary">
                                         Exit: <span className={lead.exit_matched ? 'text-secure font-semibold' : 'text-intel'}>{(lead.exit_score * 100).toFixed(1)}%</span>
@@ -1089,7 +1075,7 @@ function App() {
                                     )}
                                   </div>
 
-                                  {/* Confidence Badge - use combined_score in dual-side mode */}
+                                  {}
                                   <div className={`px-3 py-1 rounded text-xs font-bold ${(lead.combined_score || lead.confidence) >= 0.75
                                     ? 'bg-threat/20 text-threat'
                                     : (lead.combined_score || lead.confidence) >= 0.5
@@ -1103,7 +1089,7 @@ function App() {
                             ))}
                           </div>
 
-                          {/* More indicator */}
+                          {}
                           {analysisResults.ip_leads.length > 10 && (
                             <p className="text-[10px] text-text-muted mt-3 text-center">
                               + {analysisResults.ip_leads.length - 10} more IP leads in full report
@@ -1113,7 +1099,7 @@ function App() {
                       </details>
                     )}
 
-                    {/* Export Button */}
+                    {}
                     <button
                       onClick={downloadReport}
                       className="w-full btn-tactical btn-primary flex items-center justify-center gap-3"
@@ -1123,10 +1109,10 @@ function App() {
                     </button>
                   </div>
 
-                  {/* CENTER COLUMN: Case Details + Chart + Detailed Info */}
+                  {}
                   <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-                    {/* Case Details */}
+                    {}
                     <div className="panel p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-sm font-bold text-white uppercase tracking-wider">Case Details</h4>
@@ -1176,7 +1162,7 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Entry-Exit Matching Progression Chart - only show if 2+ sessions AND exit data */}
+                    {}
                     {analysisResults.correlation?.per_session_scores?.length >= 2 && (
                       <div className="panel p-6">
                         <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Entry-Exit Matching Progression</h4>
@@ -1184,21 +1170,16 @@ function App() {
                           <Plot
                             data={[
                               {
-                                // Show cumulative confidence: boost for matches, penalty for non-matches
                                 x: analysisResults.correlation.per_session_scores.map((_, i) => i),
                                 y: (() => {
                                   const sessions = analysisResults.correlation.per_session_scores;
                                   let cumulative = 0;
                                   return sessions.map((session, i) => {
-                                    // Start with session score, apply cumulative adjustment
-                                    // Match (>50%): boost confidence
-                                    // Non-match (<50%): slight penalty
                                     if (session.matched) {
                                       cumulative += 0.1 * (1 + 0.1 * Math.log(i + 1)); // Diminishing boost
                                     } else {
                                       cumulative -= 0.05; // Penalty for non-match
                                     }
-                                    // Base is session score, adjusted by cumulative boost/penalty
                                     const adjusted = Math.max(0, Math.min(session.score + cumulative, 0.999));
                                     return adjusted * 100;
                                   });
@@ -1212,7 +1193,6 @@ function App() {
                                 },
                                 marker: {
                                   size: 8,
-                                  // Color based on match status
                                   color: analysisResults.correlation.per_session_scores.map(s =>
                                     s.matched ? '#10b981' : '#ef4444'
                                   )
@@ -1253,7 +1233,7 @@ function App() {
                       </div>
                     )}
 
-                    {/* Detailed Info */}
+                    {}
                     <div className="panel p-6">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Detailed Info</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
@@ -1284,10 +1264,10 @@ function App() {
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: Globe + Export */}
+                  {}
                   <div style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-                    {/* Globe Visualization */}
+                    {}
                     <div className="panel p-6 min-h-[200px] flex flex-col items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 opacity-30">
                         <div className="absolute inset-0 bg-gradient-radial from-ops-cyan/20 to-transparent" />
@@ -1302,7 +1282,7 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Export Report Button */}
+                    {}
                     <button
                       onClick={downloadReport}
                       className="w-full btn-tactical btn-primary flex items-center justify-center gap-3"
@@ -1319,7 +1299,7 @@ function App() {
 
         </AnimatePresence>
 
-        {/* Footer */}
+        {}
         <footer className="mt-16 text-center">
           <p className="text-text-muted text-xs uppercase tracking-[0.3em]">
             ⚠ Restricted Access • Law Enforcement Only • Evidence Handling Protocol

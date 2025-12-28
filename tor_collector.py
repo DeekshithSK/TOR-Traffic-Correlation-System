@@ -22,9 +22,6 @@ from collections import defaultdict
 import config
 
 
-# ============================================================================
-# Logging Setup
-# ============================================================================
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL),
@@ -37,9 +34,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# Onionoo API Client
-# ============================================================================
 
 class OnionooClient:
     """
@@ -87,7 +81,6 @@ class OnionooClient:
                 response = self.session.get(url, params=params, timeout=self.timeout)
                 response.raise_for_status()
                 
-                # Rate limiting
                 time.sleep(config.TOR_RATE_LIMIT_DELAY)
                 
                 return response.json()
@@ -175,9 +168,6 @@ class OnionooClient:
         return relays[0] if relays else {}
 
 
-# ============================================================================
-# Relay Classifier
-# ============================================================================
 
 class RelayClassifier:
     """
@@ -197,15 +187,12 @@ class RelayClassifier:
         """
         flags = relay.get('flags', [])
         
-        # Guard nodes
         if 'Guard' in flags:
             return 'guard'
         
-        # Exit nodes
         if 'Exit' in flags and not 'BadExit' in flags:
             return 'exit'
         
-        # Middle/relay nodes (default)
         return 'middle'
     
     @staticmethod
@@ -250,9 +237,6 @@ class RelayClassifier:
         }
 
 
-# ============================================================================
-# TOR Network Graph
-# ============================================================================
 
 class TORNetworkGraph:
     """
@@ -277,7 +261,6 @@ class TORNetworkGraph:
         if timestamp is None:
             timestamp = datetime.now()
         
-        # Build graph structure
         graph_data = {
             'timestamp': timestamp.isoformat(),
             'relay_count': len(relays),
@@ -286,7 +269,6 @@ class TORNetworkGraph:
             'statistics': {}
         }
         
-        # Classify and store relays
         for relay in relays:
             metadata = RelayClassifier.extract_metadata(relay)
             relay_type = metadata['relay_type']
@@ -295,7 +277,6 @@ class TORNetworkGraph:
             graph_data['relays_by_type'][relay_type].append(fingerprint)
             graph_data['relays'][fingerprint] = metadata
         
-        # Calculate statistics
         graph_data['statistics'] = self._calculate_statistics(graph_data)
         
         self.current_snapshot = graph_data
@@ -342,7 +323,6 @@ class TORNetworkGraph:
         if self.current_snapshot is None:
             raise ValueError("No snapshot available")
         
-        # Convert sets to lists for JSON serialization
         export_data = json.loads(json.dumps(
             self.current_snapshot, 
             default=str
@@ -389,9 +369,6 @@ Bandwidth:
         return summary.strip()
 
 
-# ============================================================================
-# TOR Collector Scheduler
-# ============================================================================
 
 class TORCollector:
     """
@@ -422,14 +399,11 @@ class TORCollector:
         logger.info("Starting TOR network snapshot collection")
         logger.info("=" * 60)
         
-        # Fetch all relays
         relays = self.api_client.get_all_relays(running=config.TOR_RUNNING_ONLY)
         
-        # Add to graph
         timestamp = datetime.now()
         self.graph.add_snapshot(relays, timestamp)
         
-        # Export snapshots
         if 'json' in config.TOR_EXPORT_FORMATS:
             json_path = config.get_tor_snapshot_path(
                 timestamp.strftime("%Y%m%d_%H%M%S")
@@ -440,7 +414,6 @@ class TORCollector:
             pickle_path = json_path.with_suffix('.pickle')
             self.graph.export_pickle(pickle_path)
         
-        # Print summary
         print(self.graph.get_statistics_summary())
         
         logger.info("Snapshot collection complete")
@@ -453,7 +426,6 @@ class TORCollector:
         
         removed_count = 0
         for snapshot_file in config.TOR_DATA_DIR.glob("tor_snapshot_*"):
-            # Parse timestamp from filename
             try:
                 timestamp_str = snapshot_file.stem.replace("tor_snapshot_", "")
                 file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
@@ -468,9 +440,6 @@ class TORCollector:
         logger.info(f"Cleanup complete: removed {removed_count} old snapshots")
 
 
-# ============================================================================
-# CLI Interface
-# ============================================================================
 
 def main():
     """Main entry point for CLI usage."""

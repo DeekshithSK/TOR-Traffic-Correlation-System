@@ -18,49 +18,41 @@ import numpy as np
 import traceback
 import logging
 
-# Configure logging to reduce verbosity - only show warnings and errors
 logging.basicConfig(level=logging.WARNING)
-# Suppress verbose loggers
 logging.getLogger("pcap_processor").setLevel(logging.WARNING)
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 logging.getLogger("exit_correlation").setLevel(logging.WARNING)
 
-# Import backend modules
 from backend import (
     TrafficPreprocessor,
     RectorEngine,
     DEVICE
 )
 from report_generator import generate_forensic_report
-# Conditional import to avoid crashing if scapy is missing (handled in endpoints)
 try:
     from pcap_processor import FlowExtractor, PCAPParser
 except ImportError:
     FlowExtractor = None
     PCAPParser = None
 
-# Exit correlation module
 try:
     from exit_correlation import run_exit_correlation, ConfidenceAggregator
     EXIT_CORRELATION_AVAILABLE = True
 except ImportError:
     EXIT_CORRELATION_AVAILABLE = False
 
-# Tor path inference module (post-correlation)
 try:
     from tor_path_inference import TorPathInference, infer_path_from_guard
     TOR_PATH_INFERENCE_AVAILABLE = True
 except ImportError:
     TOR_PATH_INFERENCE_AVAILABLE = False
 
-# Origin scope estimation module (post-guard inference, supplementary)
 try:
     from origin_scope_estimation import estimate_origin_scope
     ORIGIN_SCOPE_AVAILABLE = True
 except ImportError:
     ORIGIN_SCOPE_AVAILABLE = False
 
-# IP lead generation modules
 try:
     from utils.flow_id_parser import extract_ips_from_flow_id
     from analysis.ip_lead_generation import generate_ip_leads
@@ -74,7 +66,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for dev
@@ -83,13 +74,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Operational Constants
 MODEL_PATH = "lightweight_siamese.pth"
 SEQ_LENGTH = 1000
 EMB_SIZE = 64
 NUM_WINDOWS = 11
 
-# Country Flags for common TOR hosting countries
 COUNTRY_FLAGS = {
     'US': '🇺🇸', 'DE': '🇩🇪', 'NL': '🇳🇱', 'FR': '🇫🇷', 'GB': '🇬🇧',
     'CA': '🇨🇦', 'CH': '🇨🇭', 'SE': '🇸🇪', 'FI': '🇫🇮', 'RO': '🇷🇴',
@@ -102,32 +91,24 @@ COUNTRY_FLAGS = {
 def extract_public_ip(flow_label: str) -> str:
     """Extract the public/remote IP from a flow label like '192.168.1.2_62133_51.159.211.57_9001_tcp'"""
     
-    # Check if this looks like an IPv6 flow ID (contains many underscores that were originally colons)
-    # IPv6 format when converted: 2401_4900_1c07... (8+ groups separated by underscores)
     parts = flow_label.replace('_tcp', '').replace('_udp', '').split('_')
     
-    # If there are many parts and none look like IPv4, it's probably IPv6
     ipv4_parts = [p for p in parts if p.count('.') == 3]
     
     if not ipv4_parts and len(parts) > 6:
-        # This is an IPv6 flow - return a placeholder indicating IPv6
         return "IPv6:" + flow_label[:30]
     
-    # IPv4 flow - extract IPs
     ips = ipv4_parts
     
-    # Return the first public IP (not local/private)
     for ip in ips:
         if not ip.startswith(('127.', '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
                               '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
                               '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.')):
             return ip
     
-    # Fall back to last IP if all are private
     return ips[-1] if ips else flow_label
 
 
-# Known non-Tor IP ranges and ISPs (these are CDN/cloud services, not Tor relays)
 NON_TOR_IP_PREFIXES = (
     '17.',    # Apple (iCloud, CDN)
     '23.',    # Akamai CDN (partial)
@@ -135,7 +116,6 @@ NON_TOR_IP_PREFIXES = (
     '172.64.', '172.65.', '172.66.', '172.67.', '172.68.', '172.69.', '172.70.', '172.71.', # Cloudflare
     '142.250.', '142.251.',  # Google
     '216.58.',  # Google
-    # AWS IP ranges (EC2, CloudFront, etc.) - NOT Tor relays
     '3.', '13.', '15.', '16.', '18.', '34.', '35.', '52.', '54.', '99.',
 )
 
@@ -146,7 +126,6 @@ NON_TOR_ISPS = [
     'facebook', 'meta', 'netflix', 'spotify', 'twitter', 'tiktok', 'snapchat'
 ]
 
-# Known Tor-friendly ISPs that commonly host Tor relays
 TOR_FRIENDLY_ISPS = [
     'scaleway', 'online s.a.s', 'online sas',  # Scaleway (France) - Very common for Tor
     'ovh', 'ovhcloud',                          # OVH (France/EU) - Very common for Tor
@@ -179,7 +158,6 @@ def is_likely_tor_guard(ip: str, isp: str = None) -> tuple:
     ip = str(ip)
     isp_lower = (isp or '').lower()
     
-    # FIRST: Check Tor consensus (authoritative source)
     try:
         from tor_path_inference import TorConsensusClient
         consensus = TorConsensusClient()
@@ -193,36 +171,28 @@ def is_likely_tor_guard(ip: str, isp: str = None) -> tuple:
                     nickname = relay.nickname if hasattr(relay, 'nickname') else 'Unknown'
                     return (True, 1.15, f"Verified Tor Guard relay: {nickname}")
                 elif 'Exit' in flags:
-                    # It's a Tor relay but not a Guard - still valid
                     nickname = relay.nickname if hasattr(relay, 'nickname') else 'Unknown'
                     return (True, 1.0, f"Tor relay (Exit, not Guard): {nickname}")
                 else:
-                    # In consensus but no Guard/Exit flag - still a valid relay
                     return (True, 1.0, "Verified Tor relay (Middle)")
     except Exception as e:
-        # Consensus unavailable - fall back to heuristic checks
         print(f"⚠️ Tor consensus not available for guard verification: {e}")
     
-    # FALLBACK: Check non-Tor IP ranges (Apple, Cloudflare, Google, etc.)
     for prefix in NON_TOR_IP_PREFIXES:
         if ip.startswith(prefix):
             return (False, 0.0, f"CDN IP range ({prefix}) - NOT a Tor relay")
     
-    # Check non-Tor ISPs
     for non_tor_isp in NON_TOR_ISPS:
         if non_tor_isp in isp_lower:
             return (False, 0.0, f"CDN/Cloud ISP: {isp} - NOT a Tor relay")
     
-    # Check Tor-friendly ISPs (these are likely to run Tor relays)
     for tor_isp in TOR_FRIENDLY_ISPS:
         if tor_isp in isp_lower:
             return (True, 1.0, f"Tor-friendly ISP: {isp} (not verified in consensus)")
     
-    # Unknown ISP and NOT in consensus - reject for forensic accuracy
     return (False, 0.0, "Not verified in Tor consensus - cannot use for correlation")
 
 
-# Known Tor EXIT node friendly ISPs (many exits are hosted on specific providers)
 TOR_EXIT_ISPS = [
     '1337 services',    # 1337 Services GmbH - Major Tor exit operator
     'f3 netze',         # F3 Netze - Tor exit operator
@@ -254,7 +224,6 @@ def get_exit_isp_multiplier(exit_ip: str) -> float:
             if tor_exit_isp in isp:
                 return 1.10  # 10% boost for known Tor exit operators
         
-        # Also boost general Tor-friendly ISPs
         for tor_isp in TOR_FRIENDLY_ISPS:
             if tor_isp in isp:
                 return 1.05  # 5% boost for Tor-friendly hosters
@@ -267,10 +236,8 @@ def get_exit_isp_multiplier(exit_ip: str) -> float:
 def get_ip_geolocation(flow_label: str) -> dict:
     """Get geolocation for a guard node from its flow label"""
     try:
-        # Extract the actual public IP from the flow label
         ip = extract_public_ip(flow_label)
         
-        # Handle private IPs
         if ip.startswith(('127.', '192.168.', '10.', '172.')):
             return {"country": "Local Network", "city": "Private", "flag": "🏠", "isp": "Local", "ip": ip}
         
@@ -289,14 +256,11 @@ def get_ip_geolocation(flow_label: str) -> dict:
     except Exception as e:
         print(f"Geolocation lookup failed for {flow_label}: {e}")
     
-    # Always extract IP from flow_label in fallback to avoid returning full flow ID
     extracted_ip = extract_public_ip(flow_label)
     return {"country": "Unknown", "city": "Unknown", "flag": "🌐", "isp": "Unknown", "ip": extracted_ip}
 
-# Global Engine State
 engine_instance = None
 
-# Data Models
 class CaseInfo(BaseModel):
     case_id: str
     investigator: str
@@ -309,7 +273,6 @@ class PathInferenceRequest(BaseModel):
     guard_confidence: float
     sample_count: int = 3000
 
-# Dependency: Load Engine
 def get_engine():
     global engine_instance
     if engine_instance is None:
@@ -352,21 +315,17 @@ async def upload_pcap(file: UploadFile = File(...), case_id: str = "CASE-DEFAULT
          raise HTTPException(status_code=500, detail="FlowExtractor not available (scapy missing?)")
 
     try:
-        # Secure Internal Directory
         base_dir = Path(".evidence_store") / case_id
         base_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save with file_type prefix for exit PCAPs
         if file_type == "exit":
             pcap_path = base_dir / f"exit_{file.filename}"
         else:
             pcap_path = base_dir / file.filename
         
-        # Save File
         with open(pcap_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # Extract Flows
         extractor = FlowExtractor(log_type='standard')
         num_flows, num_packets = extractor.process_pcap(str(pcap_path), str(base_dir))
         
@@ -398,7 +357,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
     """
     from pcap_processor import PCAPParser
     
-    # Try to import Tor consensus client for relay lookup
     try:
         from tor_path_inference import TorConsensusClient
         tor_consensus = TorConsensusClient()
@@ -418,7 +376,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
     print(f"╚══════════════════════════════════════════════════════════════╝")
     print(f"")
     
-    # CDN/Cloud IP prefixes to filter (not Tor relays)
     CDN_CLOUD_PREFIXES = [
         '17.',      # Apple CDN
         '122.162.', # AWS India
@@ -432,7 +389,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
     CDN_ISPS = ['amazon', 'cloudflare', 'google', 'microsoft', 'akamai', 'fastly', 'apple']
     
     try:
-        # Parse exit PCAP
         parser = PCAPParser(min_packets=3)
         raw_flows = parser.parse_pcap(exit_pcap_path)
         
@@ -442,7 +398,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 content={"detail": "No valid flows found in exit PCAP."}
             )
         
-        # Extract unique external IPs (potential exit nodes)
         exit_candidates = {}
         filtered_count = 0
         
@@ -452,13 +407,11 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 for part in parts[:2]:
                     ip = part.split(':')[0] if ':' in part else part
                     
-                    # Skip private IPs
                     if ip.startswith(('127.', '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', 
                                       '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', 
                                       '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.')):
                         continue
                     
-                    # Skip CDN/Cloud IPs
                     is_cdn = any(ip.startswith(prefix) for prefix in CDN_CLOUD_PREFIXES)
                     if is_cdn:
                         filtered_count += 1
@@ -477,11 +430,9 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
         print(f"📊 Filtered {filtered_count} CDN/Cloud flows")
         print(f"📊 Found {len(exit_candidates)} potential Tor exit IPs")
         
-        # Sort by packet count (most active IPs first)
         sorted_exits = sorted(exit_candidates.items(), 
                               key=lambda x: x[1]['packet_count'], reverse=True)[:5]
         
-        # Get geo data and filter CDN ISPs
         top_exit_nodes = []
         probable_guards = []  # Predict based on Tor-friendly ISPs
         
@@ -499,7 +450,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 city = geo_data.get('city', '')
                 flag = ''.join(chr(ord('🇦') + ord(c) - ord('A')) for c in country_code.upper()) if len(country_code) == 2 else '🌐'
                 
-                # Check if ISP is CDN (filter out)
                 isp_lower = isp.lower()
                 if any(cdn in isp_lower for cdn in CDN_ISPS):
                     print(f"  ⚠️ Skipping {exit_ip} - CDN/Cloud ISP: {isp}")
@@ -508,11 +458,9 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
             except:
                 country, flag, isp, city, org = 'Unknown', '🌐', 'Unknown', '', ''
             
-            # Calculate activity score (normalized)
             max_packets = sorted_exits[0][1]['packet_count'] if sorted_exits else 1
             activity_score = stats['packet_count'] / max_packets
             
-            # Check Tor consensus for relay info
             tor_relay_info = None
             is_known_guard = False
             is_known_exit = False
@@ -523,7 +471,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 relays = tor_consensus.get_relays_by_ip(exit_ip)
                 if relays:
                     tor_relay_info = relays[0] if isinstance(relays, list) else relays
-                    # Handle both method and property access
                     if hasattr(tor_relay_info, 'is_guard'):
                         is_known_guard = tor_relay_info.is_guard() if callable(tor_relay_info.is_guard) else tor_relay_info.is_guard
                     elif hasattr(tor_relay_info, 'flags'):
@@ -535,8 +482,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     relay_bandwidth = tor_relay_info.bandwidth if hasattr(tor_relay_info, 'bandwidth') else 0
                     print(f"  🔍 {exit_ip} found in Tor consensus: Guard={is_known_guard}, Exit={is_known_exit}, BW={relay_bandwidth}")
             
-            # CRITICAL: Only include IPs that are verified Tor relays in consensus
-            # This filters out non-Tor IPs like AWS servers, random hosts, etc.
             if TOR_CONSENSUS_AVAILABLE and tor_relay_info is None:
                 print(f"  ⚠️ Filtering {exit_ip} - NOT in Tor consensus (not a Tor relay)")
                 continue
@@ -552,7 +497,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 'flow_count': stats['flow_count'],
                 'total_bytes': stats['total_bytes'],
                 'score': activity_score,
-                # Tor consensus data
                 'is_known_guard': is_known_guard,
                 'is_known_exit': is_known_exit,
                 'relay_bandwidth': relay_bandwidth,
@@ -561,16 +505,13 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
             
             top_exit_nodes.append(node_data)
             
-            # Predict probable guard using MULTIPLE signals
             guard_probability = 0.0
             guard_reasons = []
             
-            # Signal 1: Tor consensus - known guard (highest confidence)
             if is_known_guard:
                 guard_probability += 0.5
                 guard_reasons.append("Known Guard in Tor consensus")
             
-            # Signal 2: Tor-friendly ISP
             isp_lower = isp.lower()
             for tor_isp in TOR_FRIENDLY_ISPS:
                 if tor_isp in isp_lower:
@@ -578,12 +519,10 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     guard_reasons.append(f"Tor-friendly ISP: {isp}")
                     break
             
-            # Signal 3: High bandwidth relay (guards typically have high BW)
             if relay_bandwidth > 10000000:  # >10 MB/s
                 guard_probability += 0.15
                 guard_reasons.append(f"High bandwidth: {relay_bandwidth/1000000:.1f} MB/s")
             
-            # Signal 4: Activity pattern (many packets = persistent connection = guard)
             if stats['packet_count'] > 100 and stats['flow_count'] == 1:
                 guard_probability += 0.1
                 guard_reasons.append("Persistent connection pattern")
@@ -598,23 +537,15 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
             consensus_tag = " 📡" if tor_relay_info else ""
             print(f"  {flag} {exit_ip:<20} {country:<15} {isp[:20]:<20} Guard:{is_known_guard} Exit:{is_known_exit}{consensus_tag}")
         
-        # =========================================================================
-        # GUARD PREDICTION FROM TOR CONSENSUS
-        # Use bandwidth-weighted selection + timing/burst analysis
-        # =========================================================================
         
         print(f"\n📡 Predicting probable Guard nodes from Tor consensus...")
         
         if TOR_CONSENSUS_AVAILABLE and tor_consensus:
-            # Get all known guards from consensus
             all_guards = tor_consensus.get_all_guards()
             
             if all_guards:
                 print(f"  Found {len(all_guards)} guards in Tor consensus")
                 
-                # =========================================================
-                # EXTRACT UNIQUE FEATURES FROM THIS SPECIFIC PCAP
-                # =========================================================
                 timing_stats = {
                     'total_packets': 0,
                     'total_bytes': 0,
@@ -627,7 +558,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     'unique_ips': len(exit_candidates)
                 }
                 
-                # Extract packet sizes and TIMESTAMPS from all flows
                 all_packet_sizes = []
                 all_byte_counts = []
                 flow_durations = []
@@ -639,7 +569,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     timing_stats['total_bytes'] += flow_session.byte_count
                     all_byte_counts.append(flow_session.byte_count)
                     
-                    # Extract packet sizes and timestamps
                     if hasattr(flow_session, 'ingress_packets'):
                         for ts, size in flow_session.ingress_packets:
                             all_packet_sizes.append(size)
@@ -651,7 +580,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                             all_timestamps.append(ts)
                             all_packet_data.append((ts, size))
                     
-                    # Get flow duration
                     if hasattr(flow_session, 'get_duration'):
                         duration = flow_session.get_duration()
                         if duration > 0:
@@ -662,9 +590,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                             if duration > 0:
                                 flow_durations.append(duration)
                 
-                # =========================================================
-                # ADVANCED FLOW FINGERPRINTING
-                # =========================================================
                 flow_fingerprint = {
                     'burst_entropy': 0.0,        # Burst inter-arrival entropy
                     'micro_gap_avg': 0.0,        # Average micro-gap between packets
@@ -674,11 +599,9 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     'fingerprint_hash': 0        # Unique fingerprint value
                 }
                 
-                # Sort packets by timestamp for inter-arrival analysis
                 all_packet_data.sort(key=lambda x: x[0])
                 
                 if len(all_packet_data) >= 3:
-                    # 1. BURST INTER-ARRIVAL ENTROPY
                     inter_arrivals = []
                     for i in range(1, len(all_packet_data)):
                         gap = all_packet_data[i][0] - all_packet_data[i-1][0]
@@ -686,7 +609,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                             inter_arrivals.append(gap)
                     
                     if inter_arrivals:
-                        # Calculate entropy of inter-arrival times (binned)
                         import math
                         bins = {}
                         bin_size = 0.01  # 10ms bins
@@ -702,16 +624,13 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                                 entropy -= p * math.log2(p)
                         flow_fingerprint['burst_entropy'] = entropy
                         
-                        # 2. FLOW MICRO-GAPS
                         flow_fingerprint['micro_gap_avg'] = sum(inter_arrivals) / len(inter_arrivals)
                         if len(inter_arrivals) > 1:
                             mean_gap = flow_fingerprint['micro_gap_avg']
                             variance = sum((g - mean_gap) ** 2 for g in inter_arrivals) / len(inter_arrivals)
                             flow_fingerprint['micro_gap_std'] = variance ** 0.5
                 
-                # 3. PACKET SIZE VARIANCE SLOPE
                 if len(all_packet_sizes) >= 5:
-                    # Calculate rolling variance and its slope
                     window_size = min(10, len(all_packet_sizes) // 2)
                     variances = []
                     for i in range(0, len(all_packet_sizes) - window_size, window_size):
@@ -721,17 +640,14 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                         variances.append(var)
                     
                     if len(variances) >= 2:
-                        # Calculate slope of variance trend
                         slope = (variances[-1] - variances[0]) / len(variances)
                         flow_fingerprint['size_variance_slope'] = slope
                 
-                # 4. CIRCUIT LIFETIME ESTIMATION
                 if flow_durations:
                     flow_fingerprint['circuit_lifetime'] = max(flow_durations)
                 elif all_timestamps and len(all_timestamps) >= 2:
                     flow_fingerprint['circuit_lifetime'] = max(all_timestamps) - min(all_timestamps)
                 
-                # 5. CREATE UNIQUE FINGERPRINT HASH
                 flow_fingerprint['fingerprint_hash'] = int(
                     abs(flow_fingerprint['burst_entropy'] * 1000) +
                     abs(flow_fingerprint['micro_gap_avg'] * 10000) +
@@ -739,7 +655,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     abs(flow_fingerprint['circuit_lifetime'] * 100)
                 ) % 100000
                 
-                # Calculate basic stats
                 if all_packet_sizes:
                     timing_stats['avg_packet_size'] = sum(all_packet_sizes) / len(all_packet_sizes)
                     mean = timing_stats['avg_packet_size']
@@ -762,7 +677,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 if flow_durations:
                     timing_stats['avg_flow_duration'] = sum(flow_durations) / len(flow_durations)
                 
-                # Print flow fingerprint
                 print(f"  📊 PCAP Features: {timing_stats['total_packets']} pkts, {timing_stats['total_bytes']/1024:.1f}KB, {timing_stats['flow_count']} flows")
                 print(f"  � Flow Fingerprint:")
                 print(f"     Burst Entropy: {flow_fingerprint['burst_entropy']:.3f}")
@@ -771,36 +685,24 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                 print(f"     Circuit Lifetime: {flow_fingerprint['circuit_lifetime']:.2f}s")
                 print(f"     Fingerprint Hash: {flow_fingerprint['fingerprint_hash']}")
                 
-                # =========================================================
-                # PCAP-SPECIFIC GUARD SELECTION
-                # Select guards that CORRELATE with exits seen in this PCAP
-                # =========================================================
                 
                 guard_list = list(all_guards.values()) if isinstance(all_guards, dict) else list(all_guards)
                 
-                # FILTER: Only keep relays with Guard flag
                 guard_list = [g for g in guard_list if hasattr(g, 'flags') and 'Guard' in g.flags]
                 
-                # Get countries and ISPs of detected exit nodes (PCAP-specific)
                 exit_countries = set()
                 exit_isps = set()
                 for exit_node in top_exit_nodes:
                     if exit_node.get('country'):
                         exit_countries.add(exit_node['country'])
                     if exit_node.get('isp'):
-                        # Extract key ISP words
                         isp_words = exit_node['isp'].lower().split()[:2]
                         exit_isps.update(isp_words)
                 
                 print(f"  📍 Exit countries: {exit_countries}")
                 print(f"  📍 Exit ISP keywords: {exit_isps}")
                 
-                # =========================================================
-                # FLOW-BASED GUARD CORRELATION
-                # Match guards based on ACTUAL flow characteristics
-                # =========================================================
                 
-                # Score each guard based on correlation with THIS PCAP's flows
                 guard_scores = []
                 
                 for guard in guard_list:
@@ -812,28 +714,20 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     guard_flags = guard.flags if hasattr(guard, 'flags') else []
                     guard_country = guard.country if hasattr(guard, 'country') else None
                     
-                    # Skip if not Stable AND Fast
                     if 'Stable' not in guard_flags or 'Fast' not in guard_flags:
                         continue
                     
-                    # =========================================================
-                    # FINGERPRINT-BASED GUARD SCORING
-                    # GuardScore += overlap(exit_i, exit_j, guard_k)
-                    # =========================================================
                     
                     guard_score = 0.0
                     overlap_score = 0.0
                     
-                    # Calculate EXIT OVERLAP: correlation with each detected exit
                     for i, exit_i in enumerate(top_exit_nodes):
                         exit_i_country = exit_i.get('country', '')
                         exit_i_packets = exit_i.get('packet_count', 0)
                         
-                        # Single exit correlation
                         if guard_country and guard_country == exit_i_country:
                             overlap_score += 0.10  # Same country as exit
                         
-                        # Check against other exits for multi-exit correlation
                         for j, exit_j in enumerate(top_exit_nodes):
                             if i >= j:
                                 continue  # Only unique pairs
@@ -841,12 +735,9 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                             exit_j_country = exit_j.get('country', '')
                             exit_j_packets = exit_j.get('packet_count', 0)
                             
-                            # Overlap: if guard fits between both exits
-                            # Guards in same region as exits = higher overlap
                             if guard_country == exit_i_country or guard_country == exit_j_country:
                                 overlap_score += 0.05
                             
-                            # Packet volume overlap: guard should handle combined traffic
                             combined_packets = exit_i_packets + exit_j_packets
                             if combined_packets > 0 and guard_bw > 0:
                                 traffic_match = min(combined_packets * 100, guard_bw) / max(combined_packets * 100, guard_bw)
@@ -854,11 +745,8 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     
                     guard_score += min(overlap_score, 0.30)  # Max 30% from exit overlap
                     
-                    # FINGERPRINT MATCHING (40%)
-                    # Use flow fingerprint to score guards
                     fingerprint_score = 0.0
                     
-                    # Match entropy to guard bandwidth (high entropy = varied traffic = high BW guard)
                     if flow_fingerprint['burst_entropy'] > 3.0:
                         fingerprint_score += 0.15 * min(guard_bw / 500000, 1.0)
                     elif flow_fingerprint['burst_entropy'] > 1.5:
@@ -866,14 +754,12 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     else:
                         fingerprint_score += 0.05
                     
-                    # Match micro-gap pattern to guard stability
                     if flow_fingerprint['micro_gap_std'] < 0.05:  # Low variance = stable guard
                         if 'Stable' in guard_flags:
                             fingerprint_score += 0.10
                     else:
                         fingerprint_score += 0.05
                     
-                    # Match circuit lifetime to guard uptime preference
                     if flow_fingerprint['circuit_lifetime'] > 60:  # Long circuit
                         fingerprint_score += 0.10
                     elif flow_fingerprint['circuit_lifetime'] > 10:
@@ -883,11 +769,9 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     
                     guard_score += min(fingerprint_score, 0.40)  # Max 40% from fingerprint
                     
-                    # BANDWIDTH WEIGHT (20%)
                     bw_score = 0.20 * min(guard_bw / 1000000, 1.0)
                     guard_score += bw_score
                     
-                    # TOPOLOGY BONUS (10%)
                     if 'Stable' in guard_flags and 'Fast' in guard_flags:
                         guard_score += 0.10
                     elif 'Stable' in guard_flags or 'Fast' in guard_flags:
@@ -895,19 +779,15 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     
                     guard_scores.append((guard, guard_score, guard_bw, overlap_score))
                 
-                # Sort by guard score (fingerprint + exit overlap)
                 guard_scores.sort(key=lambda x: (x[1], x[2]), reverse=True)
                 guard_list = [g[0] for g in guard_scores[:100]]
                 
-                # Print top candidates with their overlap scores
                 print(f"  After fingerprint correlation: {len(guard_list)} candidates")
                 if guard_scores[:3]:
                     print(f"  Top 3 guard overlaps: {[f'{g[3]:.2f}' for g in guard_scores[:3]]}")
                 
-                # Analyze timing correlation with exit flows
                 exit_timing_score = 0.45  # Max 45% from timing
                 if top_exit_nodes:
-                    # Check if exit flows have consistent timing (suggests guard correlation)
                     total_exit_packets = sum(e.get('packet_count', 0) for e in top_exit_nodes)
                     if total_exit_packets > 50:
                         exit_timing_score = 0.45  # Strong timing evidence
@@ -916,7 +796,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     else:
                         exit_timing_score = 0.20
                 
-                # Select top guards by bandwidth
                 guard_count = 0
                 for guard in guard_list[:10]:  # Check top 10, add 3
                     guard_ip = guard.ip_address if hasattr(guard, 'ip_address') else 'Unknown'
@@ -924,14 +803,12 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     guard_nickname = guard.nickname if hasattr(guard, 'nickname') else 'Unknown'
                     guard_flags = guard.flags if hasattr(guard, 'flags') else []
                     
-                    # FILTER: Heavily penalize or discard non-Stable/Fast
                     is_stable = 'Stable' in guard_flags
                     is_fast = 'Fast' in guard_flags
                     
                     if not is_stable and not is_fast:
                         continue  # Discard if neither Stable nor Fast
                     
-                    # Get geo data for guard
                     try:
                         geo_resp = requests.get(f"http://ip-api.com/json/{guard_ip}?fields=country,countryCode,isp", timeout=2)
                         geo_data = geo_resp.json()
@@ -942,15 +819,8 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     except:
                         g_country, g_flag, g_isp = 'Unknown', '🌐', 'Unknown'
                     
-                    # =========================================================
-                    # GUARD PROBABILITY CALCULATION (PCAP-Feature Based)
-                    # Uses unique features extracted from THIS specific PCAP
-                    # =========================================================
                     
-                    # 1. Timing / flow correlation: PRIMARY evidence (40-50%)
-                    # Based on: total packets, Tor cell ratio, burst patterns
                     base_timing = 0.0
-                    # Scale by packet count (more packets = more evidence)
                     if timing_stats['total_packets'] > 100:
                         base_timing = 0.35  # Reduced from 0.45
                     elif timing_stats['total_packets'] > 50:
@@ -960,49 +830,37 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
                     else:
                         base_timing = 0.15
                     
-                    # Boost by Tor cell ratio (strong Tor signature)
                     tor_cell_boost = timing_stats.get('tor_cell_ratio', 0) * 0.08
                     
-                    # Boost by burst count (active sessions)
                     burst_boost = min(timing_stats.get('burst_count', 0) * 0.01, 0.07)
                     
                     timing_score = min(base_timing + tor_cell_boost + burst_boost, 0.40)
                     
-                    # 2. Exit ↔ Guard time alignment: PRIMARY (20-30%)
-                    # Based on: flow count, unique IPs, total bytes
                     alignment_score = 0.15
                     if timing_stats.get('flow_count', 0) > 10:
                         alignment_score = 0.25
                     elif timing_stats.get('flow_count', 0) > 5:
                         alignment_score = 0.20
                     
-                    # Reduce if low byte volume
                     if timing_stats.get('total_bytes', 0) < 10000:  # < 10KB
                         alignment_score *= 0.7
                     
-                    # 3. Bandwidth weight: PRIOR probability (15-25%)
-                    # Use guard's position in the CURRENT iteration (guard_count)
-                    # First guard gets highest BW score, decreasing for each
                     bw_score = max(0.15 - (guard_count * 0.05), 0.05)
                     
-                    # 4. Topology / consensus metadata: Context (5-10%)
                     topology_score = 0.05
                     if is_stable and is_fast:
                         topology_score = 0.08
                     elif is_stable or is_fast:
                         topology_score = 0.06
                     
-                    # Heavy penalty if not both Stable and Fast
                     stability_penalty = 1.0
                     if not is_stable:
                         stability_penalty *= 0.6
                     if not is_fast:
                         stability_penalty *= 0.6
                     
-                    # SIGNIFICANT variance per guard rank (8% per position)
                     position_variance = (guard_count * 0.08)
                     
-                    # Final probability (should NOT be capped for all guards)
                     raw_probability = timing_score + alignment_score + bw_score + topology_score - position_variance
                     guard_probability = min(max(raw_probability * stability_penalty, 0.10), 0.95)
                     
@@ -1035,10 +893,8 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
         else:
             print("  ⚠️ Tor consensus not available - cannot predict guards")
         
-        # Sort probable guards by probability
         probable_guards.sort(key=lambda x: x['guard_probability'], reverse=True)
         
-        # Limit to top 3
         top_exit_nodes = top_exit_nodes[:3]
         probable_guards = probable_guards[:3]
         
@@ -1055,7 +911,6 @@ async def analyze_exit_only_pcap(exit_pcap_path: str, case_id: str, data_dir: st
         print(f"║  Analysis Mode:          Exit-Side Only                      ║")
         print(f"╚══════════════════════════════════════════════════════════════╝")
         
-        # Return results in compatible format
         return {
             "confidence_scores": [node['score'] for node in top_exit_nodes],
             "labels": [node['ip'] for node in top_exit_nodes],
@@ -1133,10 +988,6 @@ async def run_analysis(
     results = {}
     
     try:
-        # =========================================================
-        # AUTO-DETECT PCAP TYPE: Entry-Side or Exit-Side
-        # Based on traffic analysis ONLY - NO filename heuristics
-        # =========================================================
         pcap_files = [f for f in os.listdir(data_dir) if f.endswith(('.pcap', '.pcapng'))]
         
         detected_mode = None  # 'entry', 'exit', or 'dual'
@@ -1146,7 +997,6 @@ async def run_analysis(
             single_pcap_path = os.path.join(data_dir, pcap_files[0])
             print(f"📊 Single PCAP detected: {pcap_files[0]}")
             
-            # Use dedicated PCAP type detector (flow-based, no filename heuristics)
             from pcap_type_detector import PCAPTypeDetector
             
             detector = PCAPTypeDetector()
@@ -1166,19 +1016,15 @@ async def run_analysis(
             elif detected_mode == 'exit':
                 print(f"  ✓ Detected as EXIT-SIDE PCAP (confidence: {detection_confidence:.0%})")
             else:
-                # Unknown type - default to entry with warning
                 print(f"  ⚠️ Could not determine PCAP type (confidence: {detection_confidence:.0%}). Defaulting to ENTRY-SIDE.")
                 detected_mode = 'entry'
         
-        # Route to appropriate analysis function
         if detected_mode == 'exit' and single_pcap_path:
             print(f"📊 Running EXIT-SIDE analysis...")
             return await analyze_exit_only_pcap(single_pcap_path, case_id, data_dir)
         
-        # 1. Initialize Preprocessor (normal entry-side analysis)
         preprocessor = TrafficPreprocessor()
         
-        # Step 1: Window Creation
         qualified_flows_file = os.path.join(data_dir, "qualified_flows_internal.txt") 
         
         qualified_flows = preprocessor.create_overlap_windows(
@@ -1196,7 +1042,6 @@ async def run_analysis(
                 content={"detail": "No qualified network flows detected. The PCAP file may not contain sufficient Tor traffic patterns, or the flows are too short/sparse for correlation analysis. Please try a PCAP with more sustained network activity."}
             )
 
-        # Step 2: Feature Extraction
         output_prefix = os.path.join(data_dir, "processed_evidence_")
         
         preprocessor.process_window_files(
@@ -1208,15 +1053,12 @@ async def run_analysis(
             add_num=2
         )
         
-        # Verify output
         pickle_path = f"{output_prefix}0.pickle"
         if not os.path.exists(pickle_path):
              found = [f for f in os.listdir(data_dir) if f.startswith("processed_evidence") and f.endswith(".pickle")]
              if found:
                  pickle_path = os.path.join(data_dir, found[0])
              else:
-                  # INVESTIGATIVE MODE: Soft-fail instead of hard error
-                  # Return response with warning instead of exception
                   return {
                       "top_finding": {
                           "guard_node": "Unknown",
@@ -1235,13 +1077,11 @@ async def run_analysis(
                       }
                   }
 
-        # Step 3: Inference (now returns 4-tuple with metadata)
         result = preprocessor.load_for_inference(
             pickle_path=pickle_path,
             pad_length=SEQ_LENGTH
         )
         
-        # Handle both old 3-tuple and new 4-tuple return signatures
         if len(result) == 4:
             ingress_tensor, egress_tensor, labels, analysis_metadata = result
         else:
@@ -1251,11 +1091,9 @@ async def run_analysis(
         results['labels'] = labels
         results['source_file'] = "Uploaded PCAP Evidence"
         
-        # Run Engine
         ingress_emb = engine.inference(ingress_tensor)
         egress_emb = engine.inference(egress_tensor)
         
-        # Confidence Scoring
         confidence_scores = []
         for i in range(len(labels)):
             score = engine.get_confidence_score(
@@ -1264,20 +1102,14 @@ async def run_analysis(
             )
             confidence_scores.append(float(score)) # Ensure float for JSON
             
-        # Compile Results
         results['confidence_scores'] = confidence_scores
         
-        # ===================================================================
-        # CRITICAL: Filter candidates to VERIFIED TOR GUARDS before selecting
-        # This ensures IPv6 addresses and non-Tor IPs are not selected
-        # ===================================================================
         verified_candidates = []
         for i, label in enumerate(labels):
             geo = get_ip_geolocation(label)
             ip = geo.get("ip", "")
             isp = geo.get("isp", "")
             
-            # Check if this is a verified Tor guard
             is_tor, _, reason = is_likely_tor_guard(ip, isp)
             if is_tor:
                 verified_candidates.append({
@@ -1288,9 +1120,7 @@ async def run_analysis(
                     'label': label
                 })
         
-        # Select top from VERIFIED candidates only
         if verified_candidates:
-            # Sort by confidence score
             verified_candidates.sort(key=lambda x: x['score'], reverse=True)
             top_verified = verified_candidates[0]
             max_idx = top_verified['idx']
@@ -1299,14 +1129,12 @@ async def run_analysis(
             geo_data = top_verified['geo']
             print(f"✓ Selected verified Tor guard: {top_verified['ip']} (score: {max_score:.1%})")
         else:
-            # NO FALLBACK TO NON-TOR IPS - return "No Verified Guard" instead
             print(f"⚠️ No verified Tor guards found - cannot identify guard node from this PCAP")
             max_idx = 0
             max_score = 0.0  # Zero confidence for no verified guard
             guard_node = "No Verified Guard"
             geo_data = {"ip": None, "country": "Unknown", "isp": "N/A", "flag": "⚠️"}
         
-        # Determine Confidence Level
         if max_score >= 0.75:
             conf_level, conf_desc = "High", "Strong correlation detected."
         elif max_score >= 0.50:
@@ -1314,7 +1142,6 @@ async def run_analysis(
         else:
              conf_level, conf_desc = "Low", "Weak correlation."
 
-        # Exit correlation (if mode is guard_exit)
         correlation_mode = "guard_only"
         exit_boost = 0.0
         exit_confirmation = False
@@ -1322,10 +1149,6 @@ async def run_analysis(
         agg = None  # Aggregation result from exit correlation
         
         if mode == "guard_exit" and EXIT_CORRELATION_AVAILABLE:
-            # ===================================================================
-            # MULTI-GUARD CORRELATION: Run exit correlation for each candidate
-            # to find the guard that best matches the exit traffic patterns
-            # ===================================================================
             
             best_guard_idx = max_idx  # Default to highest guard confidence
             best_combined_score = 0.0
@@ -1334,19 +1157,16 @@ async def run_analysis(
             candidate_exit_scores = {}  # Store exit scores for ALL candidates
             guard_exit_pairs = []  # Store ALL guard-exit pair matches for UI display
             
-            # Find entry PCAP file
             entry_pcap_files = [f for f in os.listdir(data_dir) 
                                 if f.endswith(('.pcap', '.pcapng')) and not f.startswith('exit_')]
             entry_pcap_path = os.path.join(data_dir, entry_pcap_files[0]) if entry_pcap_files else None
             
-            # Parse entry PCAP once for all candidates
             all_raw_flows = {}
             from pcap_processor import PCAPParser
             if entry_pcap_path:
                 try:
                     parser = PCAPParser(min_packets=3)
                     all_raw_flows = parser.parse_pcap(entry_pcap_path)
-                    # Debug: Show total flows and unique IPs extracted
                     if all_raw_flows:
                         unique_ips = set()
                         for flow_id in all_raw_flows.keys():
@@ -1360,11 +1180,9 @@ async def run_analysis(
                 except Exception as e:
                     print(f"⚠️ Failed to parse entry PCAP: {e}")
             
-            # Try exit correlation for top N candidates (or all if few)
             top_n_candidates = min(5, len(labels))
             sorted_indices = sorted(range(len(confidence_scores)), key=lambda i: confidence_scores[i], reverse=True)
             
-            # Print header for multi-guard correlation
             print(f"")
             print(f"╔══════════════════════════════════════════════════════════════╗")
             print(f"║           ENTRY-EXIT MATCHING ANALYSIS                       ║")
@@ -1380,24 +1198,17 @@ async def run_analysis(
                 candidate_isp = candidate_geo.get("isp", "")
                 guard_conf = confidence_scores[idx]
                 
-                # Skip CDN/non-Tor IPs and get ISP score multiplier
                 is_tor, isp_multiplier, isp_reason = is_likely_tor_guard(candidate_ip, candidate_isp)
                 if not is_tor:
                     print(f"│  ⚠ Skipping {candidate_ip} - NOT TOR: {isp_reason}")
                     continue
                 
-                # Extract guard flows for this candidate
                 guard_flows = []
                 if all_raw_flows and candidate_ip:
-                    # Try multiple matching strategies for IP in flow_id
                     for flow_id, flow_session in all_raw_flows.items():
-                        # Strategy 1: Direct IP match
-                        # Strategy 2: Match by label (flow ID may use different IP format)
                         ip_matches = (candidate_ip in flow_id) or (candidate_label in flow_id)
                         
-                        # Also try matching just the first segment if candidate_ip has special chars
                         if not ip_matches and '.' in candidate_ip:
-                            # For cases like "51.159.211.57" - check if any segment matches
                             ip_matches = candidate_ip.split('.')[0] in flow_id and candidate_ip.split('.')[2] in flow_id
                         
                         if ip_matches:
@@ -1416,42 +1227,33 @@ async def run_analysis(
                                     'duration': all_packets[-1][0] - all_packets[0][0] if len(all_packets) > 1 else 0
                                 })
                 
-                # Extract ORIGIN IP (client that connects to guard) from guard flows
-                # Flow ID format: srcIP:port-dstIP:port-protocol
                 origin_ip = None
                 origin_ips_found = set()
                 if guard_flows:
                     for gf in guard_flows:
                         flow_id = gf.get('id', '')
-                        # Split flow_id: srcIP:port-dstIP:port-protocol
                         parts = flow_id.split('-')
                         if len(parts) >= 2:
-                            # Extract IPs from srcIP:port and dstIP:port
                             src_part = parts[0]  # srcIP:port
                             dst_part = parts[1]  # dstIP:port
                             
-                            # Extract IP by removing port (last : segment)
                             src_ip = src_part.rsplit(':', 1)[0] if ':' in src_part else src_part
                             dst_ip = dst_part.rsplit(':', 1)[0] if ':' in dst_part else dst_part
                             
                             print(f"│  📝 Flow: {src_ip} <-> {dst_ip}")  # DEBUG
                             
-                            # The non-guard IP is the origin/client
                             for ip in [src_ip, dst_ip]:
                                 if ip != candidate_ip and not ip.startswith(('127.', '0.0.0.0')):
                                     origin_ips_found.add(ip)
                     
-                    # Use first origin IP found
                     if origin_ips_found:
                         origin_ip = list(origin_ips_found)[0]
                         print(f"│  🔍 Origin IP detected: {origin_ip}")
                 
-                # Skip candidates with no real flows (don't use dummy fallback)
                 if not guard_flows:
                     print(f"│  ⚠ Skipping {candidate_ip[:20]}... - no matching guard flows in PCAP")
                     continue
                 
-                # Run exit correlation for this candidate
                 try:
                     candidate_exit_result, candidate_agg = run_exit_correlation(
                         guard_flows=guard_flows,
@@ -1462,16 +1264,13 @@ async def run_analysis(
                         session_count=len(labels)
                     )
                     
-                    # Entry-exit matching score: pure flow-based correlation
                     exit_score = candidate_exit_result.get('score', 0)
                     combined = exit_score  # Pure flow-based correlation score
                     matched = candidate_exit_result.get('matched', False)
                     matched_flow = candidate_exit_result.get('exit_flow', 'N/A')
                     
-                    # Get all exit IP scores for tie detection
                     all_exit_scores = candidate_exit_result.get('all_exit_scores', {})
                     
-                    # Extract exit IP from matched flow
                     exit_ip = 'N/A'
                     if matched_flow and matched_flow != 'N/A':
                         parts = matched_flow.split('-')[:2]
@@ -1486,12 +1285,9 @@ async def run_analysis(
                         if exit_ip == 'N/A' and ips:
                             exit_ip = ips[0]
                     
-                    # TIE DETECTION: Create pairs for TOP 3 exit IPs (not just within 1%)
                     if all_exit_scores:
-                        # Sort by score descending and take top 3
                         sorted_exits = sorted(all_exit_scores.items(), key=lambda x: x[1], reverse=True)[:3]
                         for eip, escore in sorted_exits:
-                            # Pure flow-based correlation score (no ISP boost)
                             guard_exit_pairs.append({
                                 'guard_ip': candidate_ip,
                                 'guard_confidence': float(guard_conf),
@@ -1504,7 +1300,6 @@ async def run_analysis(
                                 'origin_ip': origin_ip  # Client IP that connected to this guard
                             })
                     else:
-                        # Fallback: single pair if no all_exit_scores
                         guard_exit_pairs.append({
                             'guard_ip': candidate_ip,
                             'guard_confidence': float(guard_conf),
@@ -1517,7 +1312,6 @@ async def run_analysis(
                             'origin_ip': origin_ip  # Client IP that connected to this guard
                         })
                     
-                    # Print detailed matching info for this candidate
                     boost_indicator = "🔹" if isp_multiplier > 1.0 else ""
                     print(f"┌─ Guard Candidate: {candidate_ip} {boost_indicator}")
                     print(f"│  ISP:              {candidate_isp[:30]}... (×{isp_multiplier:.2f})")
@@ -1530,7 +1324,6 @@ async def run_analysis(
                     print(f"└──────────────────────────────────────────────────────────────")
                     print(f"")
                     
-                    # Store exit score for this candidate (for IP leads ranking)
                     candidate_exit_scores[candidate_ip] = {
                         'exit_score': float(exit_score),
                         'combined_score': float(combined),
@@ -1547,13 +1340,7 @@ async def run_analysis(
                 except Exception as e:
                     print(f"⚠️ Exit correlation failed for {candidate_ip}: {e}")
             
-            # ==================================================================
-            # TWO-PASS CORRELATION: Ensure consistent exit IP for all guards
-            # In Tor, there's ONE exit node per circuit - pick the best exit
-            # and re-score all guards against that specific exit
-            # ==================================================================
             
-            # Identify the most likely exit IP (appears most in high-score matches)
             exit_ip_scores = {}
             for pair in guard_exit_pairs:
                 eip = pair['exit_ip']
@@ -1566,7 +1353,6 @@ async def run_analysis(
                     if pair['matched']:
                         exit_ip_scores[eip]['matched_count'] += 1
             
-            # Check if exit IPs are TIED (top 2 within 5% of each other)
             sorted_exits = sorted(exit_ip_scores.items(), key=lambda x: x[1]['max_score'], reverse=True)
             exits_are_tied = False
             if len(sorted_exits) >= 2:
@@ -1576,7 +1362,6 @@ async def run_analysis(
                     exits_are_tied = True
                     print(f"⚠️ Multiple exit IPs have similar scores - showing all possibilities")
             
-            # Only apply boost/penalty if exits are NOT tied
             if not exits_are_tied:
                 best_exit_ip = sorted_exits[0][0] if sorted_exits else None
                 if best_exit_ip:
@@ -1587,15 +1372,12 @@ async def run_analysis(
                         else:
                             pair['combined_score'] = pair['combined_score'] * 0.7
             else:
-                # When tied, just show top exit IPs without penalty
                 top_exits = [e[0] for e in sorted_exits[:min(3, len(sorted_exits))]]  # Top 3 exits (or less)
                 if top_exits:
                     print(f"📊 Potential exit nodes: {', '.join(top_exits)}")
             
-            # Sort by combined score
             guard_exit_pairs.sort(key=lambda x: x['combined_score'], reverse=True)
             
-            # Print top matches summary
             if guard_exit_pairs:
                 print(f"╔══════════════════════════════════════════════════════════════╗")
                 print(f"║           TOP GUARD-EXIT MATCHES                             ║")
@@ -1606,12 +1388,10 @@ async def run_analysis(
                 print(f"╚══════════════════════════════════════════════════════════════╝")
                 print(f"")
             
-            # Select the BEST guard from re-sorted pairs (after exit consistency adjustment)
             if guard_exit_pairs:
                 top_pair = guard_exit_pairs[0]
                 top_guard_ip = top_pair['guard_ip']
                 
-                # Find the label/index for this guard
                 for idx, label in enumerate(labels):
                     label_geo = get_ip_geolocation(label)
                     if label_geo.get('ip') == top_guard_ip:
@@ -1625,33 +1405,28 @@ async def run_analysis(
                 print(f"✓ Selected guard {top_guard_ip} with combined score {top_pair['combined_score']*100:.1f}%")
                 print(f"   Top exit: {top_pair['exit_ip']}")
             else:
-                # NO valid guard-exit pairs after filtering - all candidates were non-Tor IPs
                 print(f"⚠️ No valid guard-exit pairs found - all candidates filtered as non-Tor IPs")
                 guard_node = "No Verified Guard"
                 geo_data = {"ip": None, "country": "Unknown", "isp": "N/A", "flag": "⚠️"}
                 max_score = 0.0
             
-            # Extract top 3 unique exit IPs with geo data for the INFERRED guard
             top_exit_nodes = []
             seen_exits = set()
             selected_guard_ip = top_guard_ip if 'top_guard_ip' in dir() else None
             
             for pair in guard_exit_pairs:
-                # Only consider exits matching the SELECTED guard
                 if selected_guard_ip and pair.get('guard_ip') != selected_guard_ip:
                     continue
                     
                 exit_ip = pair.get('exit_ip')
                 if exit_ip and exit_ip not in seen_exits and not exit_ip.startswith(('127.', '192.168.', '10.', '172.')):
                     seen_exits.add(exit_ip)
-                    # Get geo data for this exit IP
                     try:
                         exit_geo_resp = requests.get(f"http://ip-api.com/json/{exit_ip}?fields=country,countryCode,isp", timeout=2)
                         exit_geo_data = exit_geo_resp.json()
                         country = exit_geo_data.get('country', 'Unknown')
                         country_code = exit_geo_data.get('countryCode', '')
                         isp = exit_geo_data.get('isp', 'Unknown')
-                        # Get flag emoji from country code
                         flag = ''.join(chr(ord('🇦') + ord(c) - ord('A')) for c in country_code.upper()) if len(country_code) == 2 else '🌐'
                     except:
                         country, flag, isp = 'Unknown', '🌐', 'Unknown'
@@ -1672,7 +1447,6 @@ async def run_analysis(
                 exit_result = best_exit_result
                 agg = best_agg
             else:
-                # Fallback to original guard selection when no exit correlation worked
                 exit_result, agg = run_exit_correlation(
                     guard_flows=[{'id': labels[max_idx], 'packets': 10, 'timestamps': [], 'sizes': []}],
                     exit_pcap_path=exit_path,
@@ -1682,17 +1456,14 @@ async def run_analysis(
                     session_count=len(labels)
                 )
             
-            # Use aggregator's mode value (guard_only | guard+exit_indirect | guard+exit_confirmed)
             correlation_mode = agg.get('mode', 'guard_exit')
             exit_boost = agg.get('exit_boost', 0.0)
             exit_confirmation = agg.get('exit_confirmation', False)
             final_confidence = agg.get('final_confidence', max_score)
             
-            # Print clean entry-exit matching summary
             per_session = exit_result.get('per_session_scores', [])
             matched_count = sum(1 for s in per_session if s.get('matched', False))
             
-            # Extract guard IP from flow ID format: local_port_guard_port_proto
             guard_ip_display = geo_data.get('ip') or 'No Verified Guard'
             if '_' in str(guard_ip_display):
                 parts = guard_ip_display.split('_')
@@ -1704,7 +1475,6 @@ async def run_analysis(
             else:
                 client_ip = 'N/A'
             
-            # Extract PUBLIC exit IP from exit_flow (filter private IPs)
             exit_flow_str = exit_result.get('exit_flow', '')
             exit_ip_display = 'N/A'
             if exit_flow_str:
@@ -1720,11 +1490,9 @@ async def run_analysis(
                 if exit_ip_display == 'N/A' and ips:
                     exit_ip_display = ips[0]
             
-            # Calculate detailed correlation metrics
             exit_flows_count = len(exit_result.get('all_exit_scores', {})) or len(per_session)
             correlation_observations = len(per_session) * max(1, exit_flows_count)
             
-            # Determine Guard-Exit Consistency
             if matched_count > 0 and exit_result.get('score', 0) > 0.5:
                 consistency = "High"
                 consistency_desc = "Strong temporal correlation"
@@ -1735,7 +1503,6 @@ async def run_analysis(
                 consistency = "Low"
                 consistency_desc = "Weak temporal correlation"
             
-            # Determine confidence level and status
             score = exit_result.get('score', 0)
             if score >= 0.5:
                 status = "✓ HIGH CONFIDENCE"
@@ -1767,9 +1534,7 @@ async def run_analysis(
         elif mode == "guard_exit":
             correlation_mode = "guard_exit"  # User requested dual-side, but module unavailable
             exit_confirmation = False
-            # Keep guard confidence, mark no exit confirmation
         
-        # Update confidence level based on final score
         if final_confidence >= 0.75:
             conf_level, conf_desc = "High", "Strong correlation detected."
         elif final_confidence >= 0.50:
@@ -1777,10 +1542,6 @@ async def run_analysis(
         else:
             conf_level, conf_desc = "Low", "Weak correlation."
 
-        # =========================================================================
-        # PROBABLE EXIT NODE PREDICTION (from Tor Consensus)
-        # Uses same methodology as guard prediction: consensus + bandwidth weighting
-        # =========================================================================
         probable_exits = []
         try:
             from tor_path_inference import TorConsensusClient
@@ -1788,14 +1549,12 @@ async def run_analysis(
             consensus.fetch_consensus()
             
             if consensus.relay_count > 0:
-                # Get all exit nodes from consensus
                 all_exits = consensus.get_all_exits() if hasattr(consensus, 'get_all_exits') else []
                 
                 if all_exits:
                     print(f"\n📡 Predicting Probable Exit Nodes from Tor consensus...")
                     print(f"  Found {len(all_exits)} exits in Tor consensus")
                     
-                    # Score exits by bandwidth (higher BW = more likely to be used)
                     exit_scores = []
                     for exit_relay in all_exits:
                         exit_ip = exit_relay.ip_address if hasattr(exit_relay, 'ip_address') else None
@@ -1806,7 +1565,6 @@ async def run_analysis(
                         if not exit_ip:
                             continue
                         
-                        # Score based on bandwidth and flags
                         score = 0.0
                         score += 0.50 * min(exit_bw / 1000000, 1.0)  # BW weight (50%)
                         if 'Exit' in exit_flags:
@@ -1818,7 +1576,6 @@ async def run_analysis(
                         
                         exit_scores.append((exit_relay, score, exit_bw))
                     
-                    # Sort by score and take top exits
                     exit_scores.sort(key=lambda x: (x[1], x[2]), reverse=True)
                     
                     exit_count = 0
@@ -1830,11 +1587,9 @@ async def run_analysis(
                         exit_nickname = exit_relay.nickname if hasattr(exit_relay, 'nickname') else 'Unknown'
                         exit_flags = exit_relay.flags if hasattr(exit_relay, 'flags') else []
                         
-                        # Skip if not stable/fast
                         if 'Stable' not in exit_flags and 'Fast' not in exit_flags:
                             continue
                         
-                        # Get geo data
                         try:
                             geo_resp = requests.get(f"http://ip-api.com/json/{exit_ip}?fields=country,countryCode,isp", timeout=2)
                             geo_data_exit = geo_resp.json()
@@ -1845,7 +1600,6 @@ async def run_analysis(
                         except:
                             e_country, e_flag, e_isp = 'Unknown', '🌐', 'Unknown'
                         
-                        # Calculate probability (normalized score)
                         exit_probability = min(0.88 - (exit_count * 0.13), 0.95)
                         
                         probable_exits.append({
@@ -1870,7 +1624,6 @@ async def run_analysis(
             import traceback
             traceback.print_exc()
         
-        # Origin scope estimation (post-guard inference, supplementary intelligence)
         origin_scope = None
         if ORIGIN_SCOPE_AVAILABLE:
             try:
@@ -1881,22 +1634,17 @@ async def run_analysis(
                     guard_asn=None
                 )
             except Exception as scope_err:
-                # Non-fatal: origin scope is optional supplementary intelligence
                 print(f"Origin scope estimation failed (non-fatal): {scope_err}")
                 origin_scope = None
         
-        # Generate IP leads from labels and confidence scores
         ip_leads = []
         if IP_LEADS_AVAILABLE:
             try:
                 from utils.flow_id_parser import extract_public_ip
-                # Build candidates structure from labels and scores
                 candidates_for_ip = []
                 for i, label in enumerate(labels):
-                    # Extract the public/guard IP (the forensically relevant one)
                     guard_ip = extract_public_ip(label)
                     if guard_ip:
-                        # Get exit correlation score if available
                         exit_data = candidate_exit_scores.get(guard_ip, {}) if 'candidate_exit_scores' in dir() else {}
                         exit_score = exit_data.get('exit_score', 0.0)
                         combined = exit_data.get('combined_score', confidence_scores[i])
@@ -1913,13 +1661,11 @@ async def run_analysis(
                             'exit_matched': exit_matched
                         })
                 
-                # In dual-side mode, sort by combined score (guard + exit)
                 if mode == "guard_exit" and 'candidate_exit_scores' in locals() and candidate_exit_scores:
                     candidates_for_ip.sort(key=lambda x: x.get('combined_score', x['final']), reverse=True)
                 
                 ip_leads = generate_ip_leads(candidates_for_ip, min_flows=1)
                 
-                # Add exit scores to ip_leads for UI display (only if candidate_exit_scores exists)
                 if 'candidate_exit_scores' in locals() and candidate_exit_scores:
                     for lead in ip_leads:
                         lead_ip = lead.get('ip', '')
@@ -1928,7 +1674,6 @@ async def run_analysis(
                             lead['combined_score'] = candidate_exit_scores[lead_ip]['combined_score']
                             lead['exit_matched'] = candidate_exit_scores[lead_ip]['exit_matched']
                 
-                # Sort IP leads by combined score in dual-side mode
                 if mode == "guard_exit":
                     ip_leads.sort(key=lambda x: x.get('combined_score', x.get('confidence', 0)), reverse=True)
                     
@@ -1938,7 +1683,6 @@ async def run_analysis(
                 traceback.print_exc()
                 ip_leads = []
         
-        # Extract origin_ip from top guard-exit pair if available
         detected_origin_ip = None
         if 'guard_exit_pairs' in dir() and guard_exit_pairs:
             detected_origin_ip = guard_exit_pairs[0].get('origin_ip')
@@ -1971,32 +1715,23 @@ async def run_analysis(
                 "note": agg.get('note', 'Guard-only analysis') if agg else "Guard-only analysis",
                 "origin_assessment": agg.get('origin_assessment') if agg else None,
                 "indirect_evidence": agg.get('indirect_evidence') if agg else None,
-                # Add observed exit flow from exit PCAP (for display)
                 "observed_exit_flow": exit_result.get('exit_flow') if 'exit_result' in dir() and exit_result else None,
                 "matched_guard_flow": exit_result.get('guard_flow') if 'exit_result' in dir() and exit_result else None,
                 "guard_flows_count": len(guard_flows) if 'guard_flows' in dir() else 0,
                 "exit_direct_score": exit_result.get('score') if 'exit_result' in dir() and exit_result else None,
-                # Per-session scores for progression chart (match/non-match tracking)
                 "per_session_scores": exit_result.get('per_session_scores', []) if 'exit_result' in dir() and exit_result else [],
-                # All guard-exit pair matches for UI display (sorted by combined score)
                 "guard_exit_pairs": guard_exit_pairs if 'guard_exit_pairs' in dir() else [],
-                # Top 3 exit nodes with geo data (country, flag, ISP) for UI display
                 "top_exit_nodes": top_exit_nodes if 'top_exit_nodes' in dir() else [],
-                # Probable exit nodes predicted from Tor consensus (for entry-side analysis)
                 "probable_exits": probable_exits if 'probable_exits' in dir() else [],
                 "exit_boosted_score": min(
                     (exit_result.get('score', 0) if 'exit_result' in dir() and exit_result else 0) * 
                     (1 + 0.15 * np.log(len(labels)) if len(labels) > 1 else 1),
                     0.999999
                 ) if 'exit_result' in dir() and exit_result and exit_result.get('score') else None,
-                # Exit node geolocation - extract PUBLIC IP from exit_flow
-                # Flow format can be public:port-private:port or private:port-public:port
                 "exit_geo": (lambda: (
                     (lambda flow: (
-                        # Extract both IPs from flow
                         (lambda parts: (
                             (lambda ips: (
-                                # Find the PUBLIC IP (not private IP prefixes)
                                 (lambda public_ip: (
                                     get_ip_geolocation(public_ip) if public_ip else None
                                 ))(
@@ -2010,14 +1745,12 @@ async def run_analysis(
                     if 'exit_result' in dir() and exit_result and exit_result.get('exit_flow')
                     else None
                 ))(),
-                # Session-based accumulated evidence
                 "accumulated_evidence": agg.get('accumulated_evidence') if agg else None
             },
             "probable_exit_nodes": probable_exits,  # Consensus-based exit prediction
             "origin_scope": origin_scope,
             "ip_leads": ip_leads,
             "analysis_metadata": analysis_metadata,  # INVESTIGATIVE MODE: Include analysis mode and warnings
-            # AUTO-DETECTION: Set analysis_mode for frontend dashboard routing
             "analysis_mode": (
                 "entry_only" if detected_mode == 'entry' else
                 "guard_exit" if mode == "guard_exit" else
@@ -2028,8 +1761,6 @@ async def run_analysis(
         return response_data
 
     except ValueError as ve:
-        # ValueError indicates invalid input data (empty flows, insufficient packets, etc.)
-        # Return 400 Bad Request with descriptive message for the user
         return JSONResponse(
             status_code=400,
             content={
@@ -2101,14 +1832,12 @@ async def generate_report(case_info: CaseInfo, finding_data: dict, details: dict
     This endpoint expects the frontend to pass back the finding data it received.
     """
     try:
-        # Reconstruct results format expected by report_generator
         results = {
             'labels': details.get('labels', []),
             'confidence_scores': details.get('scores', []),
             'source_file': "Uploaded PCAP Evidence"
         }
         
-        # Reconstruct operational_stats with geolocation data
         operational_stats = {
             'guard_node': finding_data.get('guard_node'),
             'confidence_level': finding_data.get('confidence_level'),
@@ -2132,7 +1861,6 @@ async def generate_report(case_info: CaseInfo, finding_data: dict, details: dict
             filename=f"forensic_report_{case_info.case_id}.pdf"
         )
         
-        # Determine file type based on extension
         if report_path.endswith('.pdf'):
             media_type = "application/pdf"
             filename = f"Forensic_Report_{case_info.case_id}.pdf"
@@ -2176,7 +1904,6 @@ async def export_dashboard_report(request: DashboardReportRequest):
     try:
         print(f"\n📄 Report export requested: mode={request.analysis_mode}, case={request.case_id}")
         
-        # Import dashboard report generator
         from dashboard_report_generator import (
             generate_entry_side_report,
             generate_exit_side_report,
@@ -2190,7 +1917,6 @@ async def export_dashboard_report(request: DashboardReportRequest):
         
         print(f"  Results keys: {list(results.keys()) if results else 'None'}")
         
-        # Generate appropriate report based on analysis mode
         if analysis_mode == 'entry_only':
             report_path = generate_entry_side_report(
                 results, case_id, pcap_hash,
@@ -2212,7 +1938,6 @@ async def export_dashboard_report(request: DashboardReportRequest):
             )
             report_name = f"Dual_Side_Report_{case_id}.pdf"
         
-        # Determine media type
         if report_path.endswith('.pdf'):
             media_type = "application/pdf"
         else:
@@ -2233,7 +1958,6 @@ async def export_dashboard_report(request: DashboardReportRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    # Initial load check
     try:
         get_engine()
     except:

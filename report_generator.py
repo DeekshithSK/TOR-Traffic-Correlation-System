@@ -34,15 +34,12 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         filename: Output filename
         origin_scope: Optional origin scope estimation (supplementary intelligence)
     """
-    # Check reportlab availability at runtime
     reportlab_available = _check_reportlab()
     
     if not reportlab_available:
-        # Fallback to markdown
         return generate_markdown_report(case_info, results, findings, filename.replace('.pdf', '.md'), origin_scope)
 
     
-    # Import reportlab components (we know it's available now)
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch, mm
@@ -53,7 +50,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     output_path = os.path.abspath(filename)
     
-    # Create PDF document
     doc = SimpleDocTemplate(
         output_path,
         pagesize=A4,
@@ -63,10 +59,8 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         bottomMargin=25*mm
     )
     
-    # Create custom styles
     styles = getSampleStyleSheet()
     
-    # Title style
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
@@ -77,7 +71,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         fontName='Helvetica-Bold'
     )
     
-    # Subtitle style
     subtitle_style = ParagraphStyle(
         'CustomSubtitle',
         parent=styles['Normal'],
@@ -87,7 +80,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         spaceAfter=30
     )
     
-    # Section header style
     section_style = ParagraphStyle(
         'SectionHeader',
         parent=styles['Heading2'],
@@ -98,7 +90,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         fontName='Helvetica-Bold'
     )
     
-    # Body text style
     body_style = ParagraphStyle(
         'CustomBody',
         parent=styles['Normal'],
@@ -109,7 +100,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         leading=14
     )
     
-    # Bold label style
     label_style = ParagraphStyle(
         'Label',
         parent=styles['Normal'],
@@ -118,7 +108,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         fontName='Helvetica-Bold'
     )
     
-    # Warning style
     warning_style = ParagraphStyle(
         'Warning',
         parent=styles['Normal'],
@@ -130,10 +119,8 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         borderPadding=10
     )
     
-    # Build story (content)
     story = []
     
-    # Header
     story.append(Paragraph("TOR FORENSIC ANALYSIS REPORT", title_style))
     story.append(Paragraph(
         f"RESTRICTED - Law Enforcement Use Only<br/>"
@@ -141,7 +128,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         subtitle_style
     ))
     
-    # Case Information Table
     case_data = [
         ['Case ID:', case_info.get('case_id', 'N/A')],
         ['Investigator:', case_info.get('investigator', 'N/A')],
@@ -159,7 +145,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     story.append(case_table)
     story.append(Spacer(1, 20))
     
-    # Section 1: Executive Summary
     story.append(Paragraph("1. EXECUTIVE SUMMARY", section_style))
     
     story.append(Paragraph(
@@ -169,7 +154,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     ))
     story.append(Spacer(1, 10))
     
-    # Findings summary table
     confidence_score = findings.get('confidence_score', 0)
     if isinstance(confidence_score, float) and confidence_score <= 1:
         confidence_pct = f"{confidence_score:.1%}"
@@ -207,7 +191,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     story.append(findings_table)
     story.append(Spacer(1, 20))
     
-    # Section 2: Forensic Assessment
     story.append(Paragraph("2. FORENSIC ASSESSMENT", section_style))
     story.append(Paragraph(
         "The client maintained a persistent encrypted connection to this relay that matches "
@@ -229,7 +212,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         story.append(Paragraph(indicator, body_style))
     story.append(Spacer(1, 15))
     
-    # Section 3: Evidence Chain
     story.append(Paragraph("3. EVIDENCE CHAIN", section_style))
     evidence_data = [
         ['Source File:', results.get('source_file', 'Uploaded PCAP Evidence')],
@@ -248,7 +230,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     story.append(evidence_table)
     story.append(Spacer(1, 15))
     
-    # Section 4: Confidence Assessment
     story.append(Paragraph("4. CONFIDENCE ASSESSMENT", section_style))
     story.append(Paragraph(
         f"The confidence score of <b>{confidence_pct}</b> indicates a <b>{findings.get('confidence_level', 'N/A')}</b> "
@@ -257,7 +238,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     ))
     story.append(Spacer(1, 10))
     
-    # Confidence level reference table
     conf_ref_data = [
         ['Level', 'Score Range', 'Interpretation'],
         ['High', '75-100%', 'Strong correlation - suitable for investigative lead'],
@@ -283,7 +263,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
     story.append(conf_table)
     story.append(Spacer(1, 15))
     
-    # Section 5: Contextual Intelligence - Origin Scope (if available)
     if origin_scope:
         story.append(Paragraph("5. CONTEXTUAL INTELLIGENCE - PROBABLE ORIGIN SCOPE", section_style))
         story.append(Paragraph(
@@ -318,7 +297,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         ))
         story.append(Spacer(1, 15))
     
-    # Section 6: Operational Limitations
     story.append(Paragraph("6. OPERATIONAL LIMITATIONS" if origin_scope else "5. OPERATIONAL LIMITATIONS", section_style))
     story.append(Paragraph(
         "<b>⚠️ IMPORTANT:</b> This report provides investigative intelligence, not cryptographic proof.",
@@ -335,7 +313,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         story.append(Paragraph(limitation, body_style))
     story.append(Spacer(1, 30))
     
-    # Footer
     footer_style = ParagraphStyle(
         'Footer',
         parent=styles['Normal'],
@@ -349,7 +326,6 @@ def generate_forensic_report(case_info, results, findings, filename="forensic_re
         footer_style
     ))
     
-    # Build PDF
     doc.build(story)
     
     return output_path
@@ -365,7 +341,6 @@ def generate_markdown_report(case_info, results, findings, filename="forensic_re
     
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Build location string if available
     location_info = ""
     if findings.get('country'):
         location_info = f"""
@@ -374,13 +349,11 @@ def generate_markdown_report(case_info, results, findings, filename="forensic_re
 **ISP/Hosting:** {findings.get('isp', 'Unknown')}
 """
     
-    # Build origin scope section if available
     origin_section = ""
     section_offset = 0
     if origin_scope:
         section_offset = 1
         origin_section = f"""
-## 5. Contextual Intelligence - Probable Origin Scope
 
 > ⚠️ **NOT DIRECT ATTRIBUTION:** This is supplementary intelligence that does NOT identify the user's exact IP address or location.
 
@@ -407,7 +380,6 @@ def generate_markdown_report(case_info, results, findings, filename="forensic_re
 
 ---
 
-## 1. Executive Summary
 
 **Primary Finding:**
 Analysis of network traffic identified a persistent encrypted connection matching Tor guard node behavior.
@@ -416,7 +388,6 @@ Analysis of network traffic identified a persistent encrypted connection matchin
 {location_info}
 **Confidence Level:** {findings.get('confidence_level', 'N/A')} ({findings.get('confidence_score', 0):.1%})
 
-## 2. Forensic Assessment
 
 The client maintained a persistent encrypted connection to this relay that matches Tor guard behavior. The connection pattern, timing characteristics, and traffic volume are consistent with Tor's guard node selection protocol.
 
@@ -426,13 +397,11 @@ The client maintained a persistent encrypted connection to this relay that match
 - Connection duration matches guard rotation period
 - Correlated across {findings.get('correlated_sessions', 'N/A')} flow windows
 
-## 3. Evidence Chain
 
 **Source File:** {results.get('source_file', 'N/A')}
 **Analysis Engine:** TOR Flow Correlation Engine v1.0.0 (Certified)
 **Total Flows Analyzed:** {len(results.get('labels', []))}
 
-## 4. Confidence Assessment
 
 The confidence score of **{findings.get('confidence_score', 0):.1%}** indicates a **{findings.get('confidence_level', 'N/A')}** probability of correct identification.
 
@@ -442,7 +411,6 @@ The confidence score of **{findings.get('confidence_score', 0):.1%}** indicates 
 | Medium | 50-74% | Moderate correlation - requires corroboration |
 | Low | 0-49% | Weak correlation - insufficient for identification |
 {origin_section}
-## {limitations_section}. Operational Limitations
 
 > ⚠️ **IMPORTANT:** This report provides investigative intelligence, not cryptographic proof.
 

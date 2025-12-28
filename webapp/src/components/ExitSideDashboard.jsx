@@ -3,14 +3,7 @@ import {
     Server, Target, Activity, Zap, Database, Globe, AlertTriangle, CheckCircle
 } from 'lucide-react';
 
-/**
- * Exit-Side PCAP Analysis Dashboard
- * Displays results when an exit-side PCAP is analyzed
- * 
- * Primary focus: Detected Exit Nodes & Probable Guards
- */
 export default function ExitSideDashboard({ results, caseInfo }) {
-    // Use caseInfo.case_id for actual case identifier (e.g., CASE-1766468634)
     const actualCaseId = caseInfo?.case_id || 'CASE-UNKNOWN';
 
     const correlation = results.correlation || {};
@@ -25,7 +18,7 @@ export default function ExitSideDashboard({ results, caseInfo }) {
             animate={{ opacity: 1, y: 0 }}
             style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
-            {/* Header Banner */}
+            {}
             <div
                 className="panel"
                 style={{
@@ -119,10 +112,10 @@ export default function ExitSideDashboard({ results, caseInfo }) {
                 </div>
             </div>
 
-            {/* Main Grid - 3 Columns: Exit Nodes (larger), Guard Nodes (smaller), Traffic Profile */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '2rem' }}>
 
-                {/* LEFT: Verified Tor Exit Nodes (NOW BIGGER) */}
+                {}
                 <div className="panel" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                         <Server style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
@@ -175,7 +168,7 @@ export default function ExitSideDashboard({ results, caseInfo }) {
                     )}
                 </div>
 
-                {/* CENTER: Probable Guard Nodes (NOW SMALLER, NO %) */}
+                {}
                 <div className="panel" style={{ padding: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <Target style={{ width: '1rem', height: '1rem', color: '#10b981' }} />
@@ -237,9 +230,9 @@ export default function ExitSideDashboard({ results, caseInfo }) {
                     )}
                 </div>
 
-                {/* RIGHT: Flow Fingerprint & Traffic Profile */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {/* Flow Fingerprint */}
+                    {}
                     <div className="panel" style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                             <Zap style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
@@ -275,7 +268,7 @@ export default function ExitSideDashboard({ results, caseInfo }) {
                         </div>
                     </div>
 
-                    {/* Traffic Profile - in same column as Flow Fingerprint */}
+                    {}
                     <div className="panel" style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                             <Activity style={{ width: '1rem', height: '1rem', color: '#67d4ff' }} />
@@ -313,7 +306,7 @@ export default function ExitSideDashboard({ results, caseInfo }) {
                 </div>
             </div>
 
-            {/* Analysis Summary */}
+            {}
             <div
                 className="panel"
                 style={{

@@ -86,7 +86,6 @@ class EntryNodeAggregator:
         record['count'] += 1
         record['total_confidence'] += float(confidence)
         record['last_seen'] = timestamp
-        # Keep a limited history of timestamps
         record['timestamps'].append(timestamp)
         if len(record['timestamps']) > 50:
              record['timestamps'] = record['timestamps'][-50:]
@@ -116,8 +115,6 @@ class EntryNodeAggregator:
             if avg_confidence < min_confidence:
                 continue
                 
-            # Logarithmic boost for repeated observations
-            # Damps the effect of very high counts, but rewards consistency
             score = np.log1p(count) * avg_confidence
             
             ranked.append({
@@ -130,7 +127,6 @@ class EntryNodeAggregator:
                 'evidence_history': data['timestamps']
             })
             
-        # Sort by score descending
         ranked.sort(key=lambda x: x['score'], reverse=True)
         
         return ranked
@@ -143,7 +139,6 @@ class EntryNodeAggregator:
         logger.info("Evidence cleared.")
 
 if __name__ == "__main__":
-    # Test code
     aggregator = EntryNodeAggregator("data/test_evidence.json")
     aggregator.clear_evidence()
     

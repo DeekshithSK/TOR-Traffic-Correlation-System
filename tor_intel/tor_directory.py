@@ -63,7 +63,6 @@ class TorDirectory:
             except Exception as e:
                 logger.error(f"Failed to load cache: {e}")
         
-        # If not loaded from cache, fetch fresh
         self._fetch_fresh_data()
         
     def _fetch_fresh_data(self):
@@ -75,14 +74,12 @@ class TorDirectory:
                 data = response.json()
                 self._index_relays(data.get('relays', []))
                 
-                # Save to cache
                 self.cache_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(self.cache_path, 'w') as f:
                     json.dump(self.relays.values(), f)  # Save list of relays
                 logger.info(f"Cached {len(self.relays)} relays to {self.cache_path}")
             else:
                 logger.error(f"Failed to fetch TOR data: {response.status_code}")
-                # Fallback: try to load stale cache if exists
                 if self.cache_path.exists():
                     logger.warning("Using stale cache due to fetch failure.")
                     with open(self.cache_path, 'r') as f:
@@ -105,9 +102,7 @@ class TorDirectory:
 
     def _index_relays(self, relays_list: Union[List, Dict]):
         """Index relay data by fingerprint and IP."""
-        # Handle case where cache loads as list or original dict
         if isinstance(relays_list, dict):
-            # Should not happen with save logic, but safe
              relays_list = list(relays_list.values())
         
         self.relays = {}
@@ -118,7 +113,6 @@ class TorDirectory:
             fingerprint = relay.get('fingerprint')
             if not fingerprint: continue
             
-            # Basic enrichment
             info = {
                 'nickname': relay.get('nickname', 'Unnamed'),
                 'fingerprint': fingerprint,
@@ -134,7 +128,6 @@ class TorDirectory:
             
             self.relays[fingerprint] = info
             
-            #Index IPs
             for addr in info['or_addresses']:
                 ip = addr.split(':')[0]
                 if ip not in self.relays_by_ip:
@@ -171,21 +164,16 @@ class TorDirectory:
         if len(query) == 40 and query.isalnum(): # Likely fingerprint
              return self.get_relay_by_fingerprint(query)
         
-        # Try IP
         matches = self.get_relay_by_ip(query)
         if matches:
-            # Return high bandwidth one if multiple
             return sorted(matches, key=lambda x: x['bandwidth'], reverse=True)[0]
             
         return None
 
 if __name__ == "__main__":
-    # Test
-    # Note: This will try to fetch from network.
     print("Initializing TOR Directory...")
     td = TorDirectory(cache_path="data/tor_cache_test.json")
     
-    # Mock some data if fetch fails or for deterministic test
     if not td.relays:
         print("Injecting mock data for test...")
         mock_relay = {
@@ -197,13 +185,11 @@ if __name__ == "__main__":
         }
         td._index_relays([mock_relay])
     
-    # Test lookup
     print("Testing lookup...")
     relay = td.get_relay_by_ip('1.2.3.4')
     if relay:
         print(f"Found relay: {relay[0]['nickname']} ({relay[0]['role']})")
     else:
-        # Try to find any relay
         if td.relays:
             fp = next(iter(td.relays))
             r = td.get_relay_by_fingerprint(fp)

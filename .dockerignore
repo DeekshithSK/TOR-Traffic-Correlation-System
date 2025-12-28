@@ -1,0 +1,12 @@
+node_modules
+webapp/node_modules
+.venv
+__pycache__
+.git
+.gitignore
+.evidence_store
+verify_output
+Dockerfile
+docker-compose.yml
+README.md
+*.md

@@ -144,17 +144,18 @@
   "178.254.44.163::185.220.101.15": {
     "entry_ip": "178.254.44.163",
     "exit_ip": "185.220.101.15",
-    "count": 1,
-    "total_entry_confidence": 0.9999956488609314,
-    "total_exit_confidence": 0.3333333333333333,
-    "total_combined_confidence": 0.999999,
+    "count": 2,
+    "total_entry_confidence": 1.9529976844787598,
+    "total_exit_confidence": 0.8049922904913818,
+    "total_combined_confidence": 1.999998,
     "confirmed_count": 0,
-    "indirect_count": 1,
+    "indirect_count": 2,
     "guard_only_count": 0,
     "first_seen": "2025-12-20T10:20:43.583398",
-    "last_seen": "2025-12-20T10:20:43.583398",
+    "last_seen": "2025-12-24T10:54:14.622322",
     "timestamps": [
-      "2025-12-20T10:20:43.583398"
+      "2025-12-20T10:20:43.583398",
+      "2025-12-24T10:54:14.622322"
     ]
   },
   "178.254.44.163::45.66.35.34": {
@@ -543,17 +544,19 @@
   "178.254.44.163::172.31.40.193": {
     "entry_ip": "178.254.44.163",
     "exit_ip": "172.31.40.193",
-    "count": 1,
-    "total_entry_confidence": 0.9530020356178284,
-    "total_exit_confidence": 0.5690253494887275,
-    "total_combined_confidence": 0.999999,
-    "confirmed_count": 1,
+    "count": 3,
+    "total_entry_confidence": 2.9481508135795593,
+    "total_exit_confidence": 1.692543840819234,
+    "total_combined_confidence": 2.999997,
+    "confirmed_count": 3,
     "indirect_count": 0,
     "guard_only_count": 0,
     "first_seen": "2025-12-21T12:39:11.530880",
-    "last_seen": "2025-12-21T12:39:11.530880",
+    "last_seen": "2025-12-24T12:26:06.287244",
     "timestamps": [
-      "2025-12-21T12:39:11.530880"
+      "2025-12-21T12:39:11.530880",
+      "2025-12-24T10:53:29.662990",
+      "2025-12-24T12:26:06.287244"
     ]
   },
   "51.159.211.57::172.31.40.193": {
@@ -575,15 +578,15 @@
   "178.254.44.163::185.220.101.11": {
     "entry_ip": "178.254.44.163",
     "exit_ip": "185.220.101.11",
-    "count": 16,
-    "total_entry_confidence": 15.248032569885254,
-    "total_exit_confidence": 7.46475061581451,
-    "total_combined_confidence": 15.999984000000005,
-    "confirmed_count": 0,
-    "indirect_count": 16,
+    "count": 21,
+    "total_entry_confidence": 20.041379928588867,
+    "total_exit_confidence": 9.845553329936436,
+    "total_combined_confidence": 20.999979,
+    "confirmed_count": 1,
+    "indirect_count": 20,
     "guard_only_count": 0,
     "first_seen": "2025-12-21T14:07:04.242951",
-    "last_seen": "2025-12-24T00:56:47.613525",
+    "last_seen": "2025-12-28T14:56:40.262713",
     "timestamps": [
       "2025-12-21T14:07:04.242951",
       "2025-12-21T14:31:39.551708",
@@ -600,21 +603,26 @@
       "2025-12-23T17:33:12.266301",
       "2025-12-24T00:44:47.835212",
       "2025-12-24T00:51:29.547352",
-      "2025-12-24T00:56:47.613525"
+      "2025-12-24T00:56:47.613525",
+      "2025-12-24T06:48:23.410862",
+      "2025-12-24T10:52:41.309902",
+      "2025-12-24T10:55:58.968339",
+      "2025-12-24T11:05:14.421159",
+      "2025-12-28T14:56:40.262713"
     ]
   },
   "51.159.211.57::185.220.101.11": {
     "entry_ip": "51.159.211.57",
     "exit_ip": "185.220.101.11",
-    "count": 16,
-    "total_entry_confidence": 15.185498237609863,
-    "total_exit_confidence": 7.734693906655738,
-    "total_combined_confidence": 15.999984000000005,
-    "confirmed_count": 0,
-    "indirect_count": 16,
+    "count": 22,
+    "total_entry_confidence": 20.92776095867157,
+    "total_exit_confidence": 10.640858829696665,
+    "total_combined_confidence": 21.999978,
+    "confirmed_count": 1,
+    "indirect_count": 21,
     "guard_only_count": 0,
     "first_seen": "2025-12-21T14:07:04.871494",
-    "last_seen": "2025-12-24T00:56:48.472445",
+    "last_seen": "2025-12-28T14:56:40.723797",
     "timestamps": [
       "2025-12-21T14:07:04.871494",
       "2025-12-21T14:31:40.058333",
@@ -631,7 +639,13 @@
       "2025-12-23T17:33:13.141589",
       "2025-12-24T00:44:48.690353",
       "2025-12-24T00:51:30.283293",
-      "2025-12-24T00:56:48.472445"
+      "2025-12-24T00:56:48.472445",
+      "2025-12-24T06:48:24.570397",
+      "2025-12-24T10:52:41.919681",
+      "2025-12-24T10:55:59.827701",
+      "2025-12-24T11:05:15.178895",
+      "2025-12-24T11:40:45.546159",
+      "2025-12-28T14:56:40.723797"
     ]
   },
   "51.159.211.57::192.42.116.184": {
@@ -718,6 +732,55 @@
     "last_seen": "2025-12-23T10:07:18.677973",
     "timestamps": [
       "2025-12-23T10:07:18.677973"
+    ]
+  },
+  "51.159.211.57::82.221.128.191": {
+    "entry_ip": "51.159.211.57",
+    "exit_ip": "82.221.128.191",
+    "count": 2,
+    "total_entry_confidence": 1.7740521430969238,
+    "total_exit_confidence": 1.0744140734451495,
+    "total_combined_confidence": 1.999998,
+    "confirmed_count": 2,
+    "indirect_count": 0,
+    "guard_only_count": 0,
+    "first_seen": "2025-12-24T10:53:30.415137",
+    "last_seen": "2025-12-24T12:26:07.302704",
+    "timestamps": [
+      "2025-12-24T10:53:30.415137",
+      "2025-12-24T12:26:07.302704"
+    ]
+  },
+  "51.159.211.57::185.220.101.15": {
+    "entry_ip": "51.159.211.57",
+    "exit_ip": "185.220.101.15",
+    "count": 1,
+    "total_entry_confidence": 0.9490936398506165,
+    "total_exit_confidence": 0.4888718592485291,
+    "total_combined_confidence": 0.999999,
+    "confirmed_count": 0,
+    "indirect_count": 1,
+    "guard_only_count": 0,
+    "first_seen": "2025-12-24T10:54:15.276481",
+    "last_seen": "2025-12-24T10:54:15.276481",
+    "timestamps": [
+      "2025-12-24T10:54:15.276481"
+    ]
+  },
+  "178.254.44.163::185.220.101.27": {
+    "entry_ip": "178.254.44.163",
+    "exit_ip": "185.220.101.27",
+    "count": 1,
+    "total_entry_confidence": 0.9975743293762207,
+    "total_exit_confidence": 0.7054963066359404,
+    "total_combined_confidence": 0.999999,
+    "confirmed_count": 1,
+    "indirect_count": 0,
+    "guard_only_count": 0,
+    "first_seen": "2025-12-24T11:44:54.199648",
+    "last_seen": "2025-12-24T11:44:54.199648",
+    "timestamps": [
+      "2025-12-24T11:44:54.199648"
     ]
   }
 }

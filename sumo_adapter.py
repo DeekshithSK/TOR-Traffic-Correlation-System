@@ -44,13 +44,10 @@ class FlowFeatureExtractor:
         """
         headers = []
         
-        # Packet count features (3)
         headers.extend(['TotalPackets', 'totalPacketsIn', 'totalPacketsOut'])
         
-        # Byte count features (3)
         headers.extend(['totalBytes', 'totalBytesIn', 'totalBytesOut'])
         
-        # Packet size stats - Total (15)
         headers.extend([
             'minPacketSize', 'maxPacketSize', 'meanPacketSizes',
             'stdevPacketSizes', 'variancePacketSizes', 
@@ -60,7 +57,6 @@ class FlowFeatureExtractor:
             'p70PacketSizes', 'p80PacketSizes', 'p90PacketSizes'
         ])
         
-        # Packet size stats - Ingress (16)
         headers.extend([
             'minPacketSizeIn', 'maxPacketSizeIn', 'meanPacketSizesIn',
             'stdevPacketSizesIn', 'variancePacketSizesIn',
@@ -70,7 +66,6 @@ class FlowFeatureExtractor:
             'p70PacketSizesIn', 'p80PacketSizesIn', 'p90PacketSizesIn'
         ])
         
-        # Packet size stats - Egress (16)
         headers.extend([
             'minPacketSizeOut', 'maxPacketSizeOut', 'meanPacketSizesOut',
             'stdevPacketSizesOut', 'variancePacketSizesOut',
@@ -80,7 +75,6 @@ class FlowFeatureExtractor:
             'p70PacketSizesOut', 'p80PacketSizesOut', 'p90PacketSizesOut'
         ])
         
-        # Inter-packet time stats - Total (15)
         headers.extend([
             'maxIPT', 'minIPT', 'meanPacketTimes',
             'stdevPacketTimes', 'variancePacketTimes',
@@ -90,7 +84,6 @@ class FlowFeatureExtractor:
             'p70PacketTimes', 'p80PacketTimes', 'p90PacketTimes'
         ])
         
-        # Inter-packet time stats - Ingress (16)
         headers.extend([
             'minPacketTimesIn', 'maxPacketTimesIn', 'meanPacketTimesIn',
             'stdevPacketTimesIn', 'variancePacketTimesIn',
@@ -100,7 +93,6 @@ class FlowFeatureExtractor:
             'p70PacketTimesIn', 'p80PacketTimesIn', 'p90PacketTimesIn'
         ])
         
-        # Inter-packet time stats - Egress (16)
         headers.extend([
             'minPacketTimesOut', 'maxPacketTimesOut', 'meanPacketTimesOut',
             'stdevPacketTimesOut', 'variancePacketTimesOut',
@@ -110,7 +102,6 @@ class FlowFeatureExtractor:
             'p70PacketTimesOut', 'p80PacketTimesOut', 'p90PacketTimesOut'
         ])
         
-        # Burst stats - Outgoing packets (16)
         headers.extend([
             'out_totalBursts', 'out_maxBurst', 'out_meanBurst',
             'out_stdevBurst', 'out_varianceBurst', 'out_kurtosisBurst',
@@ -119,7 +110,6 @@ class FlowFeatureExtractor:
             'out_p60Burst', 'out_p70Burst', 'out_p80Burst', 'out_p90Burst'
         ])
         
-        # Burst stats - Outgoing bytes (16)
         headers.extend([
             'out_maxBurstBytes', 'out_minBurstBytes', 'out_meanBurstBytes',
             'out_stdevBurstBytes', 'out_varianceBurstBytes',
@@ -129,7 +119,6 @@ class FlowFeatureExtractor:
             'out_p70BurstBytes', 'out_p80BurstBytes', 'out_p90BurstBytes'
         ])
         
-        # Burst stats - Incoming packets (16)
         headers.extend([
             'in_totalBursts', 'in_maxBurst', 'in_meanBurst',
             'in_stdevBurst', 'in_varianceBurst', 'in_kurtosisBurst',
@@ -138,7 +127,6 @@ class FlowFeatureExtractor:
             'in_p60Burst', 'in_p70Burst', 'in_p80Burst', 'in_p90Burst'
         ])
         
-        # Burst stats - Incoming bytes (16)
         headers.extend([
             'in_maxBurstBytes', 'in_minBurstBytes', 'in_meanBurstBytes',
             'in_stdevBurstBytes', 'in_varianceBurstBytes',
@@ -148,7 +136,6 @@ class FlowFeatureExtractor:
             'in_p70BurstBytes', 'in_p80BurstBytes', 'in_p90BurstBytes'
         ])
         
-        # Class and Capture (metadata, not features)
         headers.extend(['Class', 'Capture'])
         
         return headers
@@ -169,7 +156,6 @@ class FlowFeatureExtractor:
             timestamps = data[:, 0]
             sizes = data[:, 1].astype(int)
             
-            # Convert to relative timestamps (first packet = 0)
             timestamps = timestamps - timestamps[0]
             
             return timestamps, sizes
@@ -196,8 +182,6 @@ class FlowFeatureExtractor:
         if len(timestamps) == 0:
             return np.array([0]), np.array([0])
         
-        # Simple burst detection: group consecutive packets
-        # In SUMo, bursts are direction-specific (we assume all same direction here)
         bursts_counts = []
         bursts_sizes = []
         
@@ -205,7 +189,6 @@ class FlowFeatureExtractor:
         current_burst_size = sizes[0]
         
         for i in range(1, len(timestamps)):
-            # If small time gap (< 10ms), consider part of same burst
             if (timestamps[i] - timestamps[i-1]) * 1000 < 10:
                 current_burst_count += 1
                 current_burst_size += sizes[i]
@@ -216,7 +199,6 @@ class FlowFeatureExtractor:
                 current_burst_count = 1
                 current_burst_size = sizes[i]
         
-        # Add last burst
         if current_burst_count > 1:
             bursts_counts.append(current_burst_count)
             bursts_sizes.append(current_burst_size)
@@ -256,7 +238,6 @@ class FlowFeatureExtractor:
                 'p90': np.percentile(values, 90),
             }
         except:
-            # Fallback for numerical issues
             return {k: 0 for k in ['min', 'max', 'mean', 'std', 'var', 'kurtosis', 'skew',
                                     'p10', 'p20', 'p30', 'p40', 'p50', 'p60', 'p70', 'p80', 'p90']}
     
@@ -274,30 +255,23 @@ class FlowFeatureExtractor:
         """
         features = {}
         
-        # Read flows
         ts_in, sizes_in = self.read_flow_file(inflow_path)
         ts_out, sizes_out = self.read_flow_file(outflow_path)
         
-        # Combine for total statistics
         all_sizes = np.concatenate([sizes_in, sizes_out])
         
-        # Compute IAT
         iat_in = self.compute_iat(ts_in)
         iat_out = self.compute_iat(ts_out)
         all_iat = np.concatenate([iat_in, iat_out])
         
-        # === PACKET COUNTS ===
         features['TotalPackets'] = len(all_sizes)
         features['totalPacketsIn'] = len(sizes_in)
         features['totalPacketsOut'] = len(sizes_out)
         
-        # === BYTE COUNTS ===
         features['totalBytes'] = int(np.sum(all_sizes))
         features['totalBytesIn'] = int(np.sum(sizes_in))
         features['totalBytesOut'] = int(np.sum(sizes_out))
         
-        # === PACKET SIZE STATISTICS ===
-        # Total
         size_stats = self.compute_statistics(all_sizes)
         features['minPacketSize'] = size_stats['min']
         features['maxPacketSize'] = size_stats['max']
@@ -316,7 +290,6 @@ class FlowFeatureExtractor:
         features['p80PacketSizes'] = size_stats['p80']
         features['p90PacketSizes'] = size_stats['p90']
         
-        # Ingress
         size_stats_in = self.compute_statistics(sizes_in)
         features['minPacketSizeIn'] = size_stats_in['min']
         features['maxPacketSizeIn'] = size_stats_in['max']
@@ -335,7 +308,6 @@ class FlowFeatureExtractor:
         features['p80PacketSizesIn'] = size_stats_in['p80']
         features['p90PacketSizesIn'] = size_stats_in['p90']
         
-        # Egress
         size_stats_out = self.compute_statistics(sizes_out)
         features['minPacketSizeOut'] = size_stats_out['min']
         features['maxPacketSizeOut'] = size_stats_out['max']
@@ -354,8 +326,6 @@ class FlowFeatureExtractor:
         features['p80PacketSizesOut'] = size_stats_out['p80']
         features['p90PacketSizesOut'] = size_stats_out['p90']
         
-        # === INTER-PACKET TIME STATISTICS ===
-        # Total
         iat_stats = self.compute_statistics(all_iat)
         features['maxIPT'] = iat_stats['max']
         features['minIPT'] = iat_stats['min']
@@ -374,7 +344,6 @@ class FlowFeatureExtractor:
         features['p80PacketTimes'] = iat_stats['p80']
         features['p90PacketTimes'] = iat_stats['p90']
         
-        # Ingress
         iat_stats_in = self.compute_statistics(iat_in)
         features['minPacketTimesIn'] = iat_stats_in['min']
         features['maxPacketTimesIn'] = iat_stats_in['max']
@@ -393,7 +362,6 @@ class FlowFeatureExtractor:
         features['p80PacketTimesIn'] = iat_stats_in['p80']
         features['p90PacketTimesIn'] = iat_stats_in['p90']
         
-        # Egress
         iat_stats_out = self.compute_statistics(iat_out)
         features['minPacketTimesOut'] = iat_stats_out['min']
         features['maxPacketTimesOut'] = iat_stats_out['max']
@@ -412,8 +380,6 @@ class FlowFeatureExtractor:
         features['p80PacketTimesOut'] = iat_stats_out['p80']
         features['p90PacketTimesOut'] = iat_stats_out['p90']
         
-        # === BURST STATISTICS ===
-        # Outgoing bursts
         burst_counts_out, burst_sizes_out = self.compute_bursts(ts_out, sizes_out)
         
         features['out_totalBursts'] = len(burst_counts_out)
@@ -452,7 +418,6 @@ class FlowFeatureExtractor:
         features['out_p80BurstBytes'] = burst_size_stats_out['p80']
         features['out_p90BurstBytes'] = burst_size_stats_out['p90']
         
-        # Incoming bursts
         burst_counts_in, burst_sizes_in = self.compute_bursts(ts_in, sizes_in)
         
         features['in_totalBursts'] = len(burst_counts_in)
@@ -491,7 +456,6 @@ class FlowFeatureExtractor:
         features['in_p80BurstBytes'] = burst_size_stats_in['p80']
         features['in_p90BurstBytes'] = burst_size_stats_in['p90']
         
-        # === METADATA ===
         features['Class'] = 0  # Placeholder (not used in inference)
         features['Capture'] = flow_id
         
@@ -513,7 +477,6 @@ class FlowFeatureExtractor:
         if not inflow_dir.exists() or not outflow_dir.exists():
             raise ValueError(f"Missing inflow or outflow directory in {flows_dir}")
         
-        # Get matching flow files
         inflow_files = {f.stem: f for f in inflow_dir.glob('*') if f.is_file()}
         outflow_files = {f.stem: f for f in outflow_dir.glob('*') if f.is_file()}
         
@@ -524,7 +487,6 @@ class FlowFeatureExtractor:
         
         logger.info(f"Processing {len(common_flows)} flows from {flows_dir}")
         
-        # Extract features for each flow
         all_features = []
         for flow_id in sorted(common_flows):
             try:
@@ -538,10 +500,8 @@ class FlowFeatureExtractor:
                 logger.warning(f"Failed to extract features for {flow_id}: {e}")
                 continue
         
-        # Create DataFrame
         df = pd.DataFrame(all_features, columns=self.feature_names)
         
-        # Apply SUMo's normalization (from gather_dataset)
         df = self.normalize_features(df)
         
         logger.info(f"Extracted features: {df.shape[0]} flows x {df.shape[1]} features")
@@ -554,28 +514,22 @@ class FlowFeatureExtractor:
         
         This must match the preprocessing done during model training.
         """
-        # Convert object columns to numeric (SUMo does this)
         feature_cols = df.columns[:-2]  # Exclude 'Class' and 'Capture'
         for col in feature_cols:
             if df[col].dtype == 'object':
                 df[col] = pd.to_numeric(df[col], downcast='float', errors='coerce')
         
-        # Fill NaN with 0 (common practice)
         df = df.fillna(0)
         
-        # Remove columns that are all zeros (SUMo does this)
         non_zero_cols = (df[feature_cols] != 0).any(axis=0)
         cols_to_keep = list(df[feature_cols].columns[non_zero_cols]) + ['Class', 'Capture']
         df = df[cols_to_keep]
         
-        # Note: SUMo does NOT apply feature scaling (e.g., StandardScaler)
-        # The XGBoost models were trained on raw feature values
         
         return df
 
 
 if __name__ == "__main__":
-    # Test the feature extractor
     import sys
     
     if len(sys.argv) < 2:

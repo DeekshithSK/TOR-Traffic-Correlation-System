@@ -26,9 +26,6 @@ except ImportError:
 import config
 
 
-# ============================================================================
-# Logging Setup
-# ============================================================================
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL),
@@ -41,9 +38,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# Flow Session Tracker
-# ============================================================================
 
 class FlowSession:
     """
@@ -70,7 +64,6 @@ class FlowSession:
         self.dst_port = dst_port
         self.protocol = protocol
         
-        # Packet lists: (timestamp, size, direction)
         self.ingress_packets = []  # Packets from src to dst
         self.egress_packets = []   # Packets from dst to src
         
@@ -114,14 +107,11 @@ class FlowSession:
             Tuple of (inflow_data, outflow_data) where each is a list of dicts
             with 'timestamp' and 'size' keys
         """
-        # Convert ingress packets
         inflow = []
         for timestamp, size in self.ingress_packets:
-            # Relative timestamp from flow start
             rel_time = timestamp - self.start_time if self.start_time else 0
             inflow.append(f"{rel_time}\t{size}")
         
-        # Convert egress packets  
         outflow = []
         for timestamp, size in self.egress_packets:
             rel_time = timestamp - self.start_time if self.start_time else 0
@@ -130,9 +120,6 @@ class FlowSession:
         return inflow, outflow
 
 
-# ============================================================================
-# PCAP Parser
-# ============================================================================
 
 class PCAPParser:
     """
@@ -169,7 +156,6 @@ class PCAPParser:
         Returns:
             Tuple of (flow_id, direction) where direction is 'ingress' or 'egress'
         """
-        # Normalize flow (smaller IP/port first for bidirectional)
         if (src_ip, src_port) < (dst_ip, dst_port):
             flow_id = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}-{protocol}"
             direction = 'ingress'
@@ -198,11 +184,9 @@ class PCAPParser:
             logger.error(f"Failed to read PCAP: {e}")
             raise
         
-        # Process each packet
         for pkt in packets:
             self._process_packet(pkt)
         
-        # Filter flows by minimum packet count
         valid_flows = {
             fid: flow for fid, flow in self.flows.items()
             if flow.packet_count >= self.min_packets
@@ -214,7 +198,6 @@ class PCAPParser:
     
     def _process_packet(self, pkt: Packet):
         """Process single packet and add to appropriate flow."""
-        # Handle both IPv4 and IPv6 packets
         from scapy.layers.inet6 import IPv6
         
         if pkt.haslayer(IP):
@@ -228,13 +211,11 @@ class PCAPParser:
             dst_ip = ip_layer.dst
             ip_version = 6
         else:
-            # Skip non-IP packets
             return
         
         timestamp = float(pkt.time)
         size = len(pkt)
         
-        # Skip loopback/localhost traffic
         if ip_version == 4:
             if src_ip.startswith("127.") or src_ip == "localhost":
                 return
@@ -243,11 +224,9 @@ class PCAPParser:
         else:  # IPv6 loopback
             if src_ip == "::1" or dst_ip == "::1":
                 return
-            # Skip link-local addresses (fe80::)
             if src_ip.startswith("fe80:") or dst_ip.startswith("fe80:"):
                 return
         
-        # Determine protocol and ports
         if pkt.haslayer(TCP):
             protocol = 'tcp'
             src_port = pkt[TCP].sport
@@ -257,20 +236,16 @@ class PCAPParser:
             src_port = pkt[UDP].sport
             dst_port = pkt[UDP].dport
         else:
-            # Skip non-TCP/UDP packets
             return
         
-        # Filter by protocol
         if protocol not in [p.lower() for p in config.PCAP_PROTOCOLS]:
             return
         
-        # Get or create flow
         flow_id, direction = self.get_flow_id(
             src_ip, dst_ip, src_port, dst_port, protocol
         )
         
         if flow_id not in self.flows:
-            # Parse flow components for FlowSession
             parts = flow_id.split('-')
             src_addr, dst_addr = parts[0], parts[1]
             src_ip_parsed, src_port_parsed = src_addr.rsplit(':', 1)
@@ -285,11 +260,9 @@ class PCAPParser:
                 protocol=protocol
             )
         
-        # Add packet to flow
         self.flows[flow_id].add_packet(timestamp, size, direction)
         self.flow_last_seen[flow_id] = timestamp
         
-        # Clean up expired flows
         self._cleanup_expired_flows(timestamp)
     
     def _cleanup_expired_flows(self, current_time: float):
@@ -301,12 +274,8 @@ class PCAPParser:
         
         for fid in expired:
             del self.flow_last_seen[fid]
-            # Keep flow in self.flows for final output
 
 
-# ============================================================================
-# Log Format Adapters
-# ============================================================================
 
 class LogFormatAdapter:
     """Base class for log format adapters."""
@@ -334,8 +303,6 @@ class ISPLogAdapter(LogFormatAdapter):
         """Filter and anonymize ISP flows."""
         if config.ISP_ANONYMIZE_IPS:
             logger.info("Anonymizing IP addresses for ISP logs")
-            # Simple anonymization: hash IPs
-            # In production, use proper anonymization techniques
         
         return flows
 
@@ -382,9 +349,6 @@ class ProxyLogAdapter(LogFormatAdapter):
         return filtered
 
 
-# ============================================================================
-# Flow Extractor
-# ============================================================================
 
 class FlowExtractor:
     """
@@ -401,7 +365,6 @@ class FlowExtractor:
         self.log_type = log_type
         self.parser = PCAPParser()
         
-        # Select appropriate adapter
         self.adapters = {
             'isp': ISPLogAdapter,
             'mail': MailServerAdapter,
@@ -427,15 +390,12 @@ class FlowExtractor:
         logger.info(f"Log Type: {self.log_type}")
         logger.info("=" * 60)
         
-        # Parse PCAP
         flows = self.parser.parse_pcap(pcap_path)
         
-        # Apply log-specific filtering
         if self.log_type in self.adapters:
             adapter = self.adapters[self.log_type]
             flows = adapter.filter_flows(flows)
         
-        # Create output directories
         output_path = Path(output_dir)
         inflow_dir = output_path / 'inflow'
         outflow_dir = output_path / 'outflow'
@@ -443,20 +403,16 @@ class FlowExtractor:
         inflow_dir.mkdir(parents=True, exist_ok=True)
         outflow_dir.mkdir(parents=True, exist_ok=True)
         
-        # Export flows
         total_packets = 0
         for flow_id, flow in flows.items():
-            # Sanitize flow_id for filename
             safe_filename = flow_id.replace(':', '_').replace('-', '_')
             
             inflow_data, outflow_data = flow.to_rector_format()
             
-            # Write inflow file
             inflow_path = inflow_dir / safe_filename
             with open(inflow_path, 'w') as f:
                 f.write('\n'.join(inflow_data))
             
-            # Write outflow file
             outflow_path = outflow_dir / safe_filename
             with open(outflow_path, 'w') as f:
                 f.write('\n'.join(outflow_data))
@@ -470,9 +426,6 @@ class FlowExtractor:
         return len(flows), total_packets
 
 
-# ============================================================================
-# PCAP to Pickle Converter
-# ============================================================================
 
 class PCAPToPickleConverter:
     """
@@ -496,22 +449,17 @@ class PCAPToPickleConverter:
         Returns:
             Path to output pickle file
         """
-        # Create temp directory for inflow/outflow
         import tempfile
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Extract flows
             self.extractor.process_pcap(pcap_path, temp_dir)
             
-            # Import backend for preprocessing
             from backend import TrafficPreprocessor
             
             preprocessor = TrafficPreprocessor()
             
-            # Use provided window params or defaults
             if window_params is None:
                 window_params = config.PCAP_WINDOW_PARAMS
             
-            # Create qualified file list
             qualified_file = Path(temp_dir) / "qualified.txt"
             
             flows = preprocessor.create_overlap_windows(
@@ -520,7 +468,6 @@ class PCAPToPickleConverter:
                 **window_params
             )
             
-            # Process windows
             if len(flows) > 0:
                 preprocessor.process_window_files(
                     data_path=temp_dir,
@@ -533,9 +480,6 @@ class PCAPToPickleConverter:
         return output_pickle
 
 
-# ============================================================================
-# CLI Interface
-# ============================================================================
 
 def main():
     """Main entry point for CLI usage."""
@@ -576,20 +520,17 @@ def main():
     
     args = parser.parse_args()
     
-    # Validate input file
     if not os.path.exists(args.input):
         print(f"❌ Error: Input file not found: {args.input}")
         return 1
     
     try:
         if args.to_pickle:
-            # Convert to pickle
             converter = PCAPToPickleConverter(log_type=args.log_type)
             output_pickle = f"{args.output}.pickle"
             converter.convert(args.input, output_pickle)
             print(f"\n✅ Success! Output: {output_pickle}")
         else:
-            # Extract to inflow/outflow
             extractor = FlowExtractor(log_type=args.log_type)
             extractor.parser.min_packets = args.min_packets
             num_flows, num_packets = extractor.process_pcap(args.input, args.output)

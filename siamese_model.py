@@ -39,11 +39,6 @@ class SiameseEncoder(nn.Module):
         """Initialize encoder to match trained 1D CNN model."""
         super(SiameseEncoder, self).__init__()
         
-        # Match the trained model architecture
-        # Conv1d layers: input shape (batch, 1, 300)
-        # net.0: Conv1d(1, 32, kernel_size=5)
-        # net.3: Conv1d(32, 64, kernel_size=3)
-        # fc: Linear(64, 64) - note: needs adaptive pooling or flattening
         self.net = nn.Sequential(
             nn.Conv1d(1, 32, kernel_size=5, padding=2),  # (batch, 32, 300)
             nn.ReLU(),
@@ -64,16 +59,12 @@ class SiameseEncoder(nn.Module):
         Returns:
             Embedding tensor (batch_size, 64)
         """
-        # Reshape to (batch, 1, 300) for Conv1d
         x = x.unsqueeze(1)
         
-        # Pass through conv layers
         x = self.net(x)
         
-        # Flatten: (batch, 64, 1) -> (batch, 64)
         x = x.squeeze(-1)
         
-        # Final FC layer
         x = self.fc(x)
         
         return x
@@ -92,7 +83,6 @@ class SiameseNetwork(nn.Module):
         """Initialize Siamese network."""
         super(SiameseNetwork, self).__init__()
         
-        # Single encoder shared by both inputs
         self.encoder = SiameseEncoder()
     
     def forward_one(self, x):
@@ -118,16 +108,11 @@ class SiameseNetwork(nn.Module):
         Returns:
             Cosine similarity (batch_size,)
         """
-        # Get embeddings
         emb1 = self.forward_one(x1)
         emb2 = self.forward_one(x2)
         
-        # Compute cosine similarity
         similarity = F.cosine_similarity(emb1, emb2, dim=1)
         
-        # Map from [-1, 1] to [0, 1] using sigmoid
-        # During training, this might have been done separately
-        # At inference, we apply sigmoid to get [0, 1] output
         similarity = torch.sigmoid(similarity)
         
         return similarity
@@ -154,7 +139,6 @@ def load_siamese_model(model_path: str,
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found: {model_path}")
     
-    # Auto-detect device
     if device is None:
         if torch.cuda.is_available():
             device = 'cuda'
@@ -166,14 +150,11 @@ def load_siamese_model(model_path: str,
     logger.info(f"Loading Siamese model from {model_path}")
     logger.info(f"Using device: {device}")
     
-    # Initialize model with correct architecture
     model = SiameseNetwork()
     
-    # Load state dict
     try:
         state_dict = torch.load(model_path, map_location=device)
         
-        # Handle different save formats
         if 'model_state_dict' in state_dict:
             model.load_state_dict(state_dict['model_state_dict'])
         elif 'state_dict' in state_dict:
@@ -187,7 +168,6 @@ def load_siamese_model(model_path: str,
         logger.error(f"Failed to load model: {e}")
         raise RuntimeError(f"Model loading failed: {e}")
     
-    # Move to device and set to eval mode
     model = model.to(device)
     model.eval()
     
@@ -210,19 +190,15 @@ def siamese_similarity(model: SiameseNetwork,
     Returns:
         Similarity score in [0, 1]
     """
-    # Auto-detect device if not specified
     if device is None:
         device = next(model.parameters()).device
     
-    # Convert to tensors
     tensor_a = torch.from_numpy(flow_a).float().unsqueeze(0).to(device)
     tensor_b = torch.from_numpy(flow_b).float().unsqueeze(0).to(device)
     
-    # Compute similarity (no grad needed for inference)
     with torch.no_grad():
         similarity = model(tensor_a, tensor_b)
     
-    # Return as float
     return float(similarity.cpu().item())
 
 
@@ -247,11 +223,9 @@ def batch_siamese_similarity(model: SiameseNetwork,
     
     similarities = []
     
-    # Process in batches
     for i in range(0, len(flow_pairs), batch_size):
         batch_pairs = flow_pairs[i:i + batch_size]
         
-        # Stack into batch tensors
         flows_a = torch.stack([
             torch.from_numpy(pair[0]).float() 
             for pair in batch_pairs
@@ -262,7 +236,6 @@ def batch_siamese_similarity(model: SiameseNetwork,
             for pair in batch_pairs
         ]).to(device)
         
-        # Compute batch similarity
         with torch.no_grad():
             batch_sim = model(flows_a, flows_b)
         
@@ -297,13 +270,10 @@ def batch_similarity_with_target(model: SiameseNetwork,
     flow_ids = list(candidate_flows.keys())
     flow_arrays = [candidate_flows[fid] for fid in flow_ids]
     
-    # Create pairs with target
     pairs = [(target_flow, flow_array) for flow_array in flow_arrays]
     
-    # Compute similarities
     similarities = batch_siamese_similarity(model, pairs, batch_size, device)
     
-    # Map back to flow IDs
     results = {
         flow_id: float(sim)
         for flow_id, sim in zip(flow_ids, similarities)
@@ -339,9 +309,6 @@ def get_model_info(model: SiameseNetwork) -> dict:
     }
 
 
-# ============================================================================
-# Testing and Validation
-# ============================================================================
 
 def test_model_architecture():
     """Test model architecture."""
@@ -349,7 +316,6 @@ def test_model_architecture():
     
     model = SiameseNetwork(input_dim=300, hidden_dims=[128, 64, 32])
     
-    # Test forward pass
     x1 = torch.randn(4, 300)
     x2 = torch.randn(4, 300)
     
@@ -384,12 +350,10 @@ def test_inference(model: SiameseNetwork):
     """Test inference with dummy data."""
     print("\nTesting inference...")
     
-    # Create dummy flows
     flow1 = np.random.randn(300).astype(np.float32) * 100 + 500
     flow2 = flow1 + np.random.randn(300).astype(np.float32) * 10
     flow3 = np.random.randn(300).astype(np.float32) * 100 + 1000
     
-    # Single inference
     sim_12 = siamese_similarity(model, flow1, flow2)
     sim_13 = siamese_similarity(model, flow1, flow3)
     
@@ -399,7 +363,6 @@ def test_inference(model: SiameseNetwork):
     assert 0 <= sim_12 <= 1, "Similarity out of range"
     assert 0 <= sim_13 <= 1, "Similarity out of range"
     
-    # Batch inference
     candidates = {f'flow_{i}': np.random.randn(300).astype(np.float32) * 100 + 500 
                   for i in range(10)}
     
@@ -417,10 +380,8 @@ if __name__ == "__main__":
     print("Siamese Model Module - Tests")
     print("=" * 70)
     
-    # Test architecture
     model = test_model_architecture()
     
-    # Test loading (if model file exists)
     model_path = "./lightweight_siamese.pth"
     if Path(model_path).exists():
         loaded_model = test_model_loading(model_path)

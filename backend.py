@@ -18,9 +18,6 @@ from typing import List, Dict, Tuple, Optional, Union
 from pathlib import Path
 from siamese_model import SiameseNetwork  # Import certified architecture
 
-# ============================================================================
-# Quiet Mode - Suppress verbose output when running as API server
-# ============================================================================
 QUIET_MODE = os.environ.get('QUIET_MODE', 'true').lower() == 'true'
 
 def vprint(*args, **kwargs):
@@ -29,9 +26,6 @@ def vprint(*args, **kwargs):
         print(*args, **kwargs)
 
 
-# ============================================================================
-# Device Configuration for Apple Silicon MPS
-# ============================================================================
 
 def get_device() -> torch.device:
     """
@@ -50,9 +44,6 @@ DEVICE = get_device()
 vprint(f"🔧 Backend initialized with device: {DEVICE}")
 
 
-# ============================================================================
-# STEP 1: Window Creation (Adapted from Step1-Data-processing.py)
-# ============================================================================
 
 class WindowCreator:
     """
@@ -111,7 +102,6 @@ class WindowCreator:
         file_names = [f for f in os.listdir(ingress_path) if not f.startswith('.')]
         
         for file_name in file_names:
-            # Parse ingress window
             in_lines = []
             ingress_file = os.path.join(ingress_path, file_name)
             
@@ -128,7 +118,6 @@ class WindowCreator:
                             continue
                         in_lines.append(line)
             
-            # Parse egress window
             out_lines = []
             egress_file = os.path.join(egress_path, file_name)
             
@@ -145,8 +134,6 @@ class WindowCreator:
                             continue
                         out_lines.append(line)
             
-            # INVESTIGATIVE MODE: Allow flows with enough packets in EITHER direction
-            # This handles asymmetric Tor guard traffic (ACK-heavy or single-direction)
             ingress_qualified = len(in_lines) >= self.threshold
             egress_qualified = len(out_lines) >= self.threshold
             
@@ -170,23 +157,16 @@ class WindowCreator:
         """
         final_names = {}
         
-        # Create overlapping windows
         for win in range(self.num_windows):
             time_interval = [win * self.add_num, win * self.add_num + self.interval]
             self._parse_csv(data_path, time_interval, final_names)
         
-        # INVESTIGATIVE MODE: Flow must appear in at least K windows (not all)
-        # K = max(2, num_windows // 3) - ensures sparse but persistent flows qualify
-        # WITHOUT accepting noisy one-off traffic
         min_windows_required = max(2, self.num_windows // 3)
         
-        # Find files that appear in at least K windows
         qualified_files = list(self._find_keys_at_least(final_names, min_windows_required))
         
-        # Sort by window count (descending) to prioritize flows with better coverage
         qualified_files.sort(key=lambda f: final_names.get(f, 0), reverse=True)
         
-        # Save to file
         os.makedirs(os.path.dirname(output_file) if os.path.dirname(output_file) else '.', exist_ok=True)
         with open(output_file, 'w') as f:
             for name in qualified_files:
@@ -196,9 +176,6 @@ class WindowCreator:
         return qualified_files
 
 
-# ============================================================================
-# STEP 2: Feature Extraction (Adapted from Step2-Deeper-processing.py)
-# ============================================================================
 
 class FeatureExtractor:
     """
@@ -252,26 +229,21 @@ class FeatureExtractor:
             arrive_time = float(parts[0])
             size = float(parts[1])
             
-            # Calculate IAT (preserve sign based on packet direction)
             if size > 0:
                 iat = arrive_time - prev_time
             else:
                 iat = -(arrive_time - prev_time)
             
-            # Filter by time window
             if arrive_time > time_interval[1]:
                 break
             if arrive_time < time_interval[0]:
                 continue
             
-            # Process packets larger than threshold (removes ACK packets)
             if abs(size) > size_threshold:
-                # Handle zero-delay packets (super-packet consolidation)
                 if prev_time != 0 and iat == 0:
                     big_pkt_buffer.append(size)
                     continue
                 
-                # Consolidate buffered packets
                 if len(big_pkt_buffer) != 0:
                     last_pkt = flows.pop()
                     consolidated_size = sum(big_pkt_buffer) + big_pkt_buffer[0]
@@ -279,7 +251,6 @@ class FeatureExtractor:
                     big_pkt_buffer = []
                     num_super_packets += 1
                 
-                # Add current packet
                 flows.append({'iat': iat, 'size': size})
                 prev_time = arrive_time
         
@@ -311,26 +282,20 @@ class FeatureExtractor:
         num_out_super = []
         
         for file_name in file_names:
-            # Process ingress
             in_file = os.path.join(ingress_path, file_name)
             in_flow, in_super = self._parse_flow_file(
                 in_file, time_interval, self.ingress_threshold
             )
             
-            # Process egress
             out_file = os.path.join(egress_path, file_name)
             out_flow, out_super = self._parse_flow_file(
                 out_file, time_interval, self.egress_threshold
             )
             
-            # INVESTIGATIVE MODE: Accept flows with data in EITHER direction
-            # Real Tor guard traffic is often asymmetric (ACK-heavy or single-direction)
             has_ingress = len(in_flow) > 0
             has_egress = len(out_flow) > 0
             
             if has_ingress or has_egress:
-                # For compatibility: create minimal placeholder for missing direction
-                # This preserves directional labeling while allowing asymmetric flows
                 if not has_ingress:
                     in_flow = [{'iat': 0.0, 'size': 0.0}]  # Minimal placeholder
                 if not has_egress:
@@ -345,7 +310,6 @@ class FeatureExtractor:
                 num_in_super.append(in_super if has_ingress else 0)
                 num_out_super.append(out_super if has_egress else 0)
         
-        # Print stats - handle asymmetric flows gracefully
         if labels:
             in_mean = np.mean([l for l in ingress_lengths if l > 0]) if any(l > 0 for l in ingress_lengths) else 0
             out_mean = np.mean([l for l in egress_lengths if l > 0]) if any(l > 0 for l in egress_lengths) else 0
@@ -371,18 +335,15 @@ class FeatureExtractor:
             num_windows: Number of windows to process
             add_num: Window overlap step size
         """
-        # Load qualified file names
         with open(file_list_path, 'r') as f:
             file_names = [line.strip() for line in f if line.strip()]
         
         vprint(f"Processing {len(file_names)} flows across {num_windows} windows...")
         
-        # Ensure output directory exists
         output_dir = os.path.dirname(output_prefix)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
         
-        # Process each window
         for win in range(num_windows):
             time_interval = [win * add_num, win * add_num + interval]
             
@@ -396,7 +357,6 @@ class FeatureExtractor:
                 "label": labels
             }
             
-            # Save pickle file
             output_file = f"{output_prefix}{interval}_win{win}_addn{add_num}_superpkt.pickle"
             with open(output_file, 'wb') as handle:
                 pickle.dump(window_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -404,9 +364,6 @@ class FeatureExtractor:
             vprint(f"  ✅ Saved: {output_file}")
 
 
-# ============================================================================
-# Traffic Preprocessor (Combines Step1 + Step2)
-# ============================================================================
 
 class TrafficPreprocessor:
     """
@@ -501,15 +458,12 @@ class TrafficPreprocessor:
         egress_seq = traces.get("egress", [])
         labels = traces.get("label", [])
         
-        # INVESTIGATIVE MODE: Generate fallback instead of hard failure
         if not ingress_seq or not egress_seq or not labels:
-            # Try to recover any available data
             if labels:  # Have labels but missing sequences
                 vprint("⚠️ LOW-CONFIDENCE: Missing flow sequences, generating fallback")
                 metadata['low_confidence'] = True
                 metadata['warning'] = "Low-confidence analysis: Flow sequences were sparse or missing"
                 
-                # Generate minimal fallback sequences
                 if not ingress_seq:
                     ingress_seq = [[{'iat': 0.0, 'size': 0.0}] for _ in labels]
                 if not egress_seq:
@@ -522,32 +476,26 @@ class TrafficPreprocessor:
         
         vprint(f"  Loaded {len(ingress_seq)} ingress and {len(egress_seq)} egress flows")
         
-        # Extract and normalize features
         ingress_features = self._extract_features(ingress_seq)
         egress_features = self._extract_features(egress_seq)
         
-        # INVESTIGATIVE MODE: Generate fallback features if extraction fails
         if not ingress_features or not egress_features:
             vprint("⚠️ LOW-CONFIDENCE: Feature extraction sparse, using fallback")
             metadata['low_confidence'] = True
             metadata['warning'] = "Low-confidence analysis due to sparse Tor flow evidence"
             
-            # Generate minimal fallback features (zeros indicate no signal)
             min_count = max(len(ingress_features), len(egress_features), len(labels), 1)
             if not ingress_features:
                 ingress_features = [np.zeros(10) for _ in range(min_count)]
             if not egress_features:
                 egress_features = [np.zeros(10) for _ in range(min_count)]
         
-        # Pad sequences
         ingress_padded = self._pad_windows(ingress_features, pad_length)
         egress_padded = self._pad_windows(egress_features, pad_length)
         
-        # Convert to tensors and move to device
         ingress_tensor = torch.FloatTensor(ingress_padded).to(self.device)
         egress_tensor = torch.FloatTensor(egress_padded).to(self.device)
         
-        # Final tensor validation
         if ingress_tensor.numel() == 0 or egress_tensor.numel() == 0:
             raise ValueError(
                 "Generated tensors are empty. Unable to proceed with analysis."
@@ -572,30 +520,23 @@ class TrafficPreprocessor:
         features = []
         
         for seq in sequences:
-            # Skip empty sequences
             if not seq or len(seq) == 0:
                 continue
             
             try:
-                # Extract IAT and Size
                 iat = np.array([float(pair["iat"]) * 1000.0 for pair in seq])
                 size = np.array([float(pair["size"]) / 1000.0 for pair in seq])
                 
-                # Skip if arrays are empty
                 if len(iat) == 0 or len(size) == 0:
                     continue
                 
-                # Set first IAT to 0 (normalization)
                 iat = np.concatenate(([0.0], iat[1:]))
                 
-                # Concatenate IAT and Size
                 combined = np.concatenate((iat, size), axis=None)
                 
-                # Only append non-empty combined features
                 if len(combined) > 0:
                     features.append(combined)
             except (KeyError, TypeError, ValueError) as e:
-                # Skip malformed sequences
                 vprint(f"  Skipping malformed sequence: {e}")
                 continue
         
@@ -615,7 +556,6 @@ class TrafficPreprocessor:
         Raises:
             ValueError: If window_list is empty
         """
-        # Validate input - prevent empty tensor creation
         if not window_list or len(window_list) == 0:
             raise ValueError(
                 "No valid flow windows to process. The PCAP may not contain "
@@ -625,20 +565,16 @@ class TrafficPreprocessor:
         padded = []
         
         for x in window_list:
-            # Skip empty sequences
             if x is None or len(x) == 0:
                 continue
                 
-            # Truncate if necessary
             x_trunc = x[:pad_length]
             
-            # Pad with zeros if needed
             if len(x_trunc) < pad_length:
                 x_trunc = np.pad(x_trunc, (0, pad_length - len(x_trunc)), 'constant')
             
             padded.append(x_trunc.reshape(-1, 1))
         
-        # Final validation after processing
         if not padded:
             raise ValueError(
                 "All flow windows were empty after processing. Unable to generate "
@@ -648,13 +584,7 @@ class TrafficPreprocessor:
         return np.array(padded)
 
 
-# ============================================================================
-# MODEL ARCHITECTURES
-# ============================================================================
 
-# ---------------------------------------------------------------------------
-# Architecture 1: GRU + Attention (from Step5_new_idea.py)
-# ---------------------------------------------------------------------------
 
 class GRUWindowEncoder(nn.Module):
     """
@@ -725,7 +655,6 @@ class GRU_MIL_Siamese(nn.Module):
         self.fc = nn.Linear(final_hidden_size, final_hidden_size)
     
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        # x: (batch, num_windows, window_length, 1)
         batch_size, num_windows, window_length, _ = x.size()
         x_reshaped = x.view(batch_size * num_windows, window_length, 1)
         x_reshaped = x_reshaped.contiguous()
@@ -740,9 +669,6 @@ class GRU_MIL_Siamese(nn.Module):
         return final_emb, attn_weights
 
 
-# ---------------------------------------------------------------------------
-# Architecture 2: Deep Fingerprinting Model (Simplified from Step3/Step4)
-# ---------------------------------------------------------------------------
 
 class DFModel(nn.Module):
     """
@@ -756,7 +682,6 @@ class DFModel(nn.Module):
         self.model_name = model_name
         seq_length, channels = input_shape
         
-        # Conv layers
         self.conv1 = nn.Conv1d(channels, 32, kernel_size=8, stride=1, padding=3)
         self.bn1 = nn.BatchNorm1d(32)
         self.pool1 = nn.MaxPool1d(kernel_size=8, stride=4)
@@ -765,20 +690,17 @@ class DFModel(nn.Module):
         self.bn2 = nn.BatchNorm1d(64)
         self.pool2 = nn.MaxPool1d(kernel_size=8, stride=4)
         
-        # Calculate flattened size
         with torch.no_grad():
             dummy_input = torch.zeros(1, channels, seq_length)
             x = self.pool1(F.relu(self.bn1(self.conv1(dummy_input))))
             x = self.pool2(F.relu(self.bn2(self.conv2(x))))
             flattened_size = x.numel()
         
-        # FC layers
         self.fc1 = nn.Linear(flattened_size, 128)
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(128, emb_size)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (batch, channels, seq_length)
         x = self.pool1(F.relu(self.bn1(self.conv1(x))))
         x = self.pool2(F.relu(self.bn2(self.conv2(x))))
         
@@ -790,9 +712,6 @@ class DFModel(nn.Module):
         return x
 
 
-# ============================================================================
-# Inference Engine
-# ============================================================================
 
 class RectorEngine:
     """
@@ -815,7 +734,6 @@ class RectorEngine:
         self.model_type = model_type
         self.emb_size = emb_size
         
-        # Initialize model architecture
         if model_type == 'gru':
             self.model = GRU_MIL_Siamese(
                 input_size=1,
@@ -834,10 +752,8 @@ class RectorEngine:
             ).to(self.device)
             self.is_multi_window = False
         elif model_type == 'siamese':
-            # Support for Certified Siamese Architecture
             self.model = SiameseNetwork().to(self.device)
             self.is_multi_window = False
-            # SiameseNetwork expects (batch, seq_len) not (batch, seq_len, 1)
         else:
             raise ValueError(f"Unknown model_type: {model_type}. Choose 'gru', 'df', or 'siamese'.")
         
@@ -851,11 +767,9 @@ class RectorEngine:
         CRITICAL: Ignores 'path' argument to prevent unauthorized model injection.
         Always loads 'lightweight_siamese.pth' from the application root.
         """
-        # Hardcoded operational model path
         certified_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "lightweight_siamese.pth"))
         
         if path is not None:
-            # Log attempt to use custom path (security audit)
             vprint(f"🔒 Security Enforcement: Ignoring custom model path '{path}'. Using certified engine.")
             
         if not os.path.exists(certified_path):
@@ -883,7 +797,6 @@ class RectorEngine:
         Raises:
             ValueError: If input tensor is empty or has invalid dimensions
         """
-        # Validate input tensor
         if feature_tensor is None:
             raise ValueError("Feature tensor is None. Cannot perform inference.")
         
@@ -893,14 +806,12 @@ class RectorEngine:
                 "No valid flow data available for analysis."
             )
         
-        # Check for minimum dimensions
         if feature_tensor.dim() < 2:
             raise ValueError(
                 f"Feature tensor has insufficient dimensions (shape: {feature_tensor.shape}). "
                 "Expected at least 2D tensor (batch, seq_len)."
             )
         
-        # Check batch size
         if feature_tensor.shape[0] == 0:
             raise ValueError(
                 "Feature tensor has zero batch size. No flows to analyze."
@@ -913,11 +824,8 @@ class RectorEngine:
                 embeddings, attention = self.model(feature_tensor)
                 return embeddings, attention
             elif self.model_type == 'siamese':
-                # Siamese model forward_one expects (batch, seq_len)
-                # Input is (batch, seq_len, 1)
                 x = feature_tensor.squeeze(-1)
                 
-                # Additional validation after squeeze
                 if x.numel() == 0 or x.shape[-1] == 0:
                     raise ValueError(
                         f"Squeezed tensor is empty (shape: {x.shape}). "
@@ -927,7 +835,6 @@ class RectorEngine:
                 embeddings = self.model.forward_one(x)
                 return embeddings
             else:
-                # DF model expects (batch, channels, seq_len)
                 if feature_tensor.dim() == 3:
                     feature_tensor = feature_tensor.permute(0, 2, 1)
                 embeddings = self.model(feature_tensor)
@@ -949,36 +856,28 @@ class RectorEngine:
         return similarity.mean().item()
 
 
-# ============================================================================
-# Example Usage
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 60)
     print("Traffic Analysis Dashboard - Backend Test")
     print("=" * 60)
     
-    # Test device detection
     print(f"\n🔧 Device: {DEVICE}")
     print(f"   MPS Available: {torch.backends.mps.is_available()}")
     print(f"   CUDA Available: {torch.cuda.is_available()}")
     
-    # Test preprocessor initialization
     print("\n📦 Testing TrafficPreprocessor...")
     preprocessor = TrafficPreprocessor()
     print("   ✅ TrafficPreprocessor initialized")
     
-    # Test model architectures
     print("\n🧠 Testing Model Architectures...")
     
-    # Test GRU model
     print("   Testing GRU_MIL_Siamese...")
     gru_engine = RectorEngine(model_type='gru', input_shape=(1000, 1), emb_size=64)
     dummy_input_gru = torch.randn(2, 11, 1000, 1).to(DEVICE)
     emb_gru, attn = gru_engine.inference(dummy_input_gru)
     print(f"   ✅ GRU output shape: {emb_gru.shape}, Attention: {attn.shape}")
     
-    # Test DF model
     print("   Testing DFModel...")
     df_engine = RectorEngine(model_type='df', input_shape=(1000, 1), emb_size=64)
     dummy_input_df = torch.randn(2, 1000, 1).to(DEVICE)

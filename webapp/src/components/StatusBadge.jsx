@@ -100,7 +100,6 @@ export default function StatusBadge({
     );
 }
 
-// Threat Level Badge specifically for forensic results
 export function ThreatLevelBadge({ level, score }) {
     const getLevel = () => {
         if (score >= 0.75) return { variant: 'high', label: 'HIGH CONFIDENCE' };

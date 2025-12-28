@@ -12,10 +12,10 @@ export default function StepWizard({ currentStep }) {
     return (
         <div className="w-full max-w-2xl mx-auto mb-12">
             <div className="flex items-center justify-between relative">
-                {/* Progress Line Background */}
+                {}
                 <div className="absolute top-5 left-0 right-0 h-0.5 bg-ops-border" />
 
-                {/* Progress Line Active */}
+                {}
                 <div
                     className="absolute top-5 left-0 h-0.5 bg-ops-cyan transition-all duration-500 ease-out"
                     style={{ width: `${(stepIndex / (STEPS.length - 1)) * 100}%` }}
@@ -28,7 +28,7 @@ export default function StepWizard({ currentStep }) {
 
                     return (
                         <div key={step.id} className="relative z-10 flex flex-col items-center">
-                            {/* Step Circle */}
+                            {}
                             <div
                                 className={`
                   w-10 h-10 rounded-full flex items-center justify-center
@@ -48,7 +48,7 @@ export default function StepWizard({ currentStep }) {
                                 )}
                             </div>
 
-                            {/* Step Label */}
+                            {}
                             <span
                                 className={`
                   mt-3 text-xs font-semibold uppercase tracking-wider

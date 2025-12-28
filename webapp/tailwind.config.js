@@ -1,13 +1,12 @@
-/** @type {import('tailwindcss').Config} */
+
 export default {
     content: [
         "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
+        "./src*.{js,ts,jsx,tsx}",
     ],
     theme: {
         extend: {
             colors: {
-                // Police-Grade Operations Palette
                 'ops': {
                     'black': '#0a0c10',
                     'navy': '#0d1117',
@@ -33,7 +32,6 @@ export default {
                     DEFAULT: '#e3b341',
                     'dark': '#9e6a03',
                 },
-                // Legacy support
                 'forensic-dark': '#0a0c10',
                 'forensic-panel': '#161b22',
                 'forensic-border': '#21262d',

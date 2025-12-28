@@ -70,31 +70,24 @@ class SUMoSourceSeparationFilter:
                 'fallback_used': bool            # True if fallback triggered
             }
         """
-        # Prepare features
         X = features_df[features_df.columns[:-2]]  # Exclude Class and Capture
         flow_ids = features_df['Capture'].tolist()
         
-        # Ensure feature alignment with model
         X = self._align_features(X)
         
-        # Run inference
         logger.info(f"Running source separation inference on {len(X)} flows")
         probabilities = self.model.predict_proba(X)
         
-        # Get probability of class 1 (OS-side)
         os_probabilities = probabilities[:, 1]
         
-        # Classify flows
         client_mask = os_probabilities < threshold
         
         client_flow_ids = [flow_ids[i] for i in range(len(flow_ids)) if client_mask[i]]
         os_flow_ids = [flow_ids[i] for i in range(len(flow_ids)) if not client_mask[i]]
         
-        # Handle fallback case
         fallback_used = False
         if len(client_flow_ids) == 0 and fallback_top_k > 0:
             logger.warning(f"All flows classified as OS-side. Using fallback: top-{fallback_top_k} lowest confidence")
-            # Get indices of top-K lowest probabilities (most client-like)
             top_k_indices = np.argsort(os_probabilities)[:fallback_top_k]
             client_flow_ids = [flow_ids[i] for i in top_k_indices]
             os_flow_ids = [flow_ids[i] for i in range(len(flow_ids)) if i not in top_k_indices]
@@ -113,12 +106,10 @@ class SUMoSourceSeparationFilter:
     
     def _align_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """Align input features with model's expected features."""
-        # Add missing features as zeros
         for feat in self.model_features:
             if feat not in X.columns:
                 X[feat] = 0
         
-        # Reorder to match model
         return X[self.model_features]
 
 
@@ -181,28 +172,22 @@ class SUMoTargetSeparationFilter:
                 'threshold': threshold
             }
         
-        # Get features for client flows only
         client_mask = features_df['Capture'].isin(client_flow_ids)
         client_features_df = features_df[client_mask]
         
         X = client_features_df[client_features_df.columns[:-2]]
         flow_ids = client_features_df['Capture'].tolist()
         
-        # Align features
         X = self._align_features(X)
         
-        # Run inference
         logger.info(f"Running target separation inference on {len(X)} client flows")
         probabilities = self.model.predict_proba(X)
         
-        # Get probability of class 1 (session to OS)
         os_session_probabilities = probabilities[:, 1]
         
-        # Filter flows above threshold
         filtered_mask = os_session_probabilities >= threshold
         filtered_flow_ids = [flow_ids[i] for i in range(len(flow_ids)) if filtered_mask[i]]
         
-        # Handle fallback
         fallback_used = False
         if len(filtered_flow_ids) == 0 and fallback_top_k > 0:
             logger.warning(f"All flows filtered out. Using fallback: top-{fallback_top_k} highest confidence")
@@ -288,7 +273,6 @@ class SUMoPipeline:
         total_flows = len(features_df)
         logger.info(f"Starting SUMo pipeline on {total_flows} flows")
         
-        # Stage 1: Source Separation
         logger.info("=== Stage 1: Source Separation ===")
         source_results = self.source_filter.filter(
             features_df,
@@ -296,7 +280,6 @@ class SUMoPipeline:
             fallback_top_k=fallback_top_k * 2  # More lenient for first stage
         )
         
-        # Stage 2: Target Separation (on client flows only)
         logger.info("=== Stage 2: Target Separation ===")
         target_results = self.target_filter.filter(
             source_results['client_flow_ids'],
@@ -305,21 +288,17 @@ class SUMoPipeline:
             fallback_top_k=fallback_top_k
         )
         
-        # Final filtered flow IDs
         filtered_flow_ids = target_results['filtered_flow_ids']
         
-        # Retrieve original raw flows (NOT SUMo features!)
         logger.info("=== Retrieving Original Raw Flows ===")
         filtered_raw_flows = {}
         espresso_ready_flows = []
         
         for flow_id in filtered_flow_ids:
             if flow_id in flow_store:
-                # Get original flow data
                 flow_data = flow_store[flow_id]
                 filtered_raw_flows[flow_id] = flow_data
                 
-                # Format for ESPRESSO (expects original time-series)
                 espresso_ready_flows.append({
                     'flow_id': flow_id,
                     'inflow_path': flow_data.get('inflow_path'),
@@ -331,7 +310,6 @@ class SUMoPipeline:
             else:
                 logger.warning(f"Flow {flow_id} not found in flow store")
         
-        # Calculate reduction ratio
         reduction_ratio = 1.0 - (len(filtered_flow_ids) / total_flows) if total_flows > 0 else 0.0
         
         logger.info(f"=== Filtering Complete ===")
@@ -379,7 +357,6 @@ def load_default_pipeline(sumo_base_path: str = './sumo') -> SUMoPipeline:
 
 
 if __name__ == "__main__":
-    # Example usage
     print("SUMo Filtering Wrapper")
     print("=" * 60)
     print("\nUsage example:")
@@ -387,11 +364,9 @@ if __name__ == "__main__":
     from sumo_filter import load_default_pipeline
     from sumo_adapter import FlowFeatureExtractor
     
-    # 1. Extract features
     extractor = FlowFeatureExtractor()
     features_df = extractor.process_flow_directory('./data/flows/')
     
-    # 2. Create flow store (original raw flows)
     flow_store = {
         'flow_001': {
             'inflow_path': './data/flows/inflow/flow_001',
@@ -403,11 +378,9 @@ if __name__ == "__main__":
         ...
     }
     
-    # 3. Run filtering
     pipeline = load_default_pipeline()
     results = pipeline.run_filtering(features_df, flow_store)
     
-    # 4. Use filtered flows for ESPRESSO
     for flow in results['espresso_ready_flows']:
         print(f"Flow {flow['flow_id']}: {flow['inflow_path']}")
     """)

@@ -4,14 +4,9 @@ import {
     Target, Server, Shield, Activity, CheckCircle, Link, TrendingUp, Database, AlertCircle, X, User, Info
 } from 'lucide-react';
 
-/**
- * Dual-Side PCAP Analysis Dashboard
- * Displays results when both entry + exit PCAPs are analyzed
- */
 export default function DualSideDashboard({ results, caseInfo }) {
     const [selectedMatch, setSelectedMatch] = useState(null);
 
-    // Use caseInfo.case_id for actual case identifier (e.g., CASE-1766468634)
     const actualCaseId = caseInfo?.case_id || 'CASE-UNKNOWN';
 
     const correlation = results.correlation || {};
@@ -29,7 +24,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
             animate={{ opacity: 1, y: 0 }}
             style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
-            {/* Mode Header */}
+            {}
             <div
                 className={`panel border-l-4 ${isConfirmed ? 'border-secure' : 'border-intel'}`}
                 style={{ padding: '1.5rem' }}
@@ -122,10 +117,10 @@ export default function DualSideDashboard({ results, caseInfo }) {
             </div>
 
 
-            {/* Primary Findings Row - Guard -> Wire -> Exits */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 1fr', gap: '1.5rem', alignItems: 'stretch' }}>
 
-                {/* Confirmed Guard Node */}
+                {}
                 <div className="panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                         <Target style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
@@ -142,7 +137,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                         </div>
                     </div>
 
-                    {/* Origin IP Section */}
+                    {}
                     {topFinding.origin_ip && (
                         <div style={{
                             marginTop: '1rem',
@@ -164,26 +159,28 @@ export default function DualSideDashboard({ results, caseInfo }) {
                         </div>
                     )}
 
+                    {}
                     <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Confidence</span>
+                        <span style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Final Confidence</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <span style={{
                                 fontSize: '0.75rem',
                                 padding: '0.25rem 0.75rem',
                                 borderRadius: '9999px',
-                                backgroundColor: topFinding.confidence_level === 'High' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                                color: topFinding.confidence_level === 'High' ? '#10b981' : '#3b82f6'
+                                backgroundColor: (topFinding.confidence_score >= 0.90) ? 'rgba(16, 185, 129, 0.2)' : (topFinding.confidence_score >= 0.50) ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                color: (topFinding.confidence_score >= 0.90) ? '#10b981' : (topFinding.confidence_score >= 0.50) ? '#3b82f6' : '#ef4444'
                             }}>
-                                {topFinding.confidence_level || 'Medium'}
+                                {(topFinding.confidence_score >= 0.90) ? 'High (≥90%)' : (topFinding.confidence_score >= 0.50) ? 'Medium (≥50%)' : 'Low (<50%)'}
                             </span>
                         </div>
                     </div>
+
                 </div>
 
 
 
 
-                {/* Wire Connection Visualization - BEHIND cards */}
+                {}
                 <div style={{ position: 'relative', width: '200px', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 0 }}>
                     <svg
                         width="300"
@@ -206,7 +203,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                             </filter>
                         </defs>
 
-                        {/* Wire 1: Top */}
+                        {}
                         <path
                             d="M 0 60 C 40 60, 50 30, 100 30"
                             stroke="url(#wireGradient)"
@@ -220,7 +217,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                             <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" />
                         </path>
 
-                        {/* Wire 2: Upper-Mid */}
+                        {}
                         <path
                             d="M 0 60 C 40 60, 50 50, 100 50"
                             stroke="url(#wireGradient)"
@@ -234,7 +231,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                             <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" begin="0.3s" />
                         </path>
 
-                        {/* Wire 3: Lower-Mid */}
+                        {}
                         <path
                             d="M 0 60 C 40 60, 50 70, 100 70"
                             stroke="url(#wireGradient)"
@@ -248,7 +245,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                             <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" begin="0.6s" />
                         </path>
 
-                        {/* Wire 4: Bottom */}
+                        {}
                         <path
                             d="M 0 60 C 40 60, 50 90, 100 90"
                             stroke="url(#wireGradient)"
@@ -264,7 +261,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                     </svg>
                 </div>
 
-                {/* Top Exit Nodes */}
+                {}
                 <div className="panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                         <Server style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
@@ -272,7 +269,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                     </div>
                     {topExits.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            {/* Reorder: show 2nd exit first, then 1st, then rest */}
+                            {}
                             {[...topExits.slice(0, 3)].sort((a, b) => {
                                 const idxA = topExits.indexOf(a);
                                 const idxB = topExits.indexOf(b);
@@ -307,7 +304,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                 </div>
             </div>
 
-            {/* Top Guard-Exit Matches Row - Full Width */}
+            {}
             <div className="panel" style={{ padding: '1.5rem', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                     <Link style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
@@ -331,7 +328,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
-                                {/* Guard IP with Flag */}
+                                {}
                                 <div style={{ marginBottom: '0.5rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                         <Shield style={{ width: '0.875rem', height: '0.875rem', color: '#3b82f6' }} />
@@ -345,12 +342,12 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     </div>
                                 </div>
 
-                                {/* Arrow */}
+                                {}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.25rem' }}>
                                     ↓
                                 </div>
 
-                                {/* Exit IP with Flag */}
+                                {}
                                 {(() => {
                                     const exitGeo = topExits.find(e => e.ip === pair.exit_ip) || {};
                                     return (
@@ -369,7 +366,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     );
                                 })()}
 
-                                {/* Info hint */}
+                                {}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                                     <Info style={{ width: '0.875rem', height: '0.875rem', color: '#6b7280' }} />
                                 </div>
@@ -377,7 +374,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                         ))}
                     </div>
                 ) : topExits.length > 0 ? (
-                    /* Fallback to topExits if no guard_exit_pairs */
+                    
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                         {topExits.slice(0, 4).map((exit, idx) => (
                             <div
@@ -426,7 +423,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                     </div>
                 )}
 
-                {/* Popup Modal for Match Details */}
+                {}
                 <AnimatePresence>
                     {selectedMatch && (
                         <motion.div
@@ -462,7 +459,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                                 }}
                             >
-                                {/* Header */}
+                                {}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                                     <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
                                         🔗 Guard-Exit Match Details
@@ -483,7 +480,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     </button>
                                 </div>
 
-                                {/* Client Origin - Now First */}
+                                {}
                                 <div style={{
                                     padding: '1rem',
                                     backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -503,12 +500,12 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     </p>
                                 </div>
 
-                                {/* Arrow */}
+                                {}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.5rem' }}>
                                     ↓
                                 </div>
 
-                                {/* Guard Node */}
+                                {}
                                 <div style={{
                                     padding: '1rem',
                                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -533,14 +530,13 @@ export default function DualSideDashboard({ results, caseInfo }) {
                                     </div>
                                 </div>
 
-                                {/* Arrow */}
+                                {}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0', color: '#6b7280', fontSize: '1.5rem' }}>
                                     ↓
                                 </div>
 
-                                {/* Exit Node */}
+                                {}
                                 {(() => {
-                                    // Find exit node geo data from topExits array
                                     const exitGeo = topExits.find(e => e.ip === selectedMatch.exit_ip) || {};
                                     return (
                                         <div style={{
@@ -573,7 +569,7 @@ export default function DualSideDashboard({ results, caseInfo }) {
                 </AnimatePresence>
             </div>
 
-            {/* Analysis Summary */}
+            {}
             <div
                 className="panel"
                 style={{

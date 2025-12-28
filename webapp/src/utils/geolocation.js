@@ -1,4 +1,3 @@
-// Country data with flags (ISO 3166-1 alpha-2)
 const COUNTRY_FLAGS = {
     'US': { flag: '🇺🇸', name: 'United States' },
     'DE': { flag: '🇩🇪', name: 'Germany' },
@@ -33,10 +32,8 @@ const COUNTRY_FLAGS = {
     'UNKNOWN': { flag: '🌐', name: 'Unknown Location' }
 };
 
-// Free IP geolocation API (ip-api.com)
 export async function getIPGeolocation(ip) {
     try {
-        // Handle localhost/private IPs
         if (ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === 'localhost') {
             return { country: 'UNKNOWN', countryCode: 'UNKNOWN', city: 'Local Network', flag: '🏠' };
         }
@@ -62,7 +59,6 @@ export async function getIPGeolocation(ip) {
     return { country: 'Unknown', countryCode: 'UNKNOWN', city: 'Unknown', flag: '🌐', countryName: 'Unknown Location' };
 }
 
-// Get country info from code
 export function getCountryInfo(countryCode) {
     return COUNTRY_FLAGS[countryCode] || COUNTRY_FLAGS['UNKNOWN'];
 }

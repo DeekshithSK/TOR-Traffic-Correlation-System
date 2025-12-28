@@ -39,7 +39,6 @@ class ForensicReportGenerator:
 **Date**: {date}
 **Analyst**: Automated System (v2.0)
 
-## 1. Executive Summary
 
 Traffic analysis was performed on target flow `{target_flow_id}` to identify potential entry points into the Tor network.
 The system analyzed {candidate_count} candidate flows.
@@ -48,7 +47,6 @@ The system analyzed {candidate_count} candidate flows.
 The analysis identified **{top_suspect_id}** as the most probable guard node association, with a confidence of **{confidence:.1%}**.
 *Note: This is a probabilistic correlation, not a definitive identification.*
 
-## 2. Methodology
 
 This analysis utilizes a multi-stage correlation pipeline:
 1.  **SUMo Filtering**: Traffic classification to isolate Tor-like flows.
@@ -61,15 +59,12 @@ This analysis utilizes a multi-stage correlation pipeline:
 - Results may be affected by network jitter, packet loss, or active countermeasures (padding).
 - High confidence scores indicate strong flow similarity, not absolute proof of origin.
 
-## 3. Analysis Findings
 
-### 3.1 Top Suspected Guard Nodes
 
 | Rank | Identifier / IP | Role | Confidence (Session) | Confidence (Aggr.) | Evidence Count |
 |------|-----------------|------|----------------------|--------------------|----------------|
 {ranking_table}
 
-### 3.2 Detailed Evidence for Primary Suspect
 **Suspect**: `{top_suspect_id}`
 {suspect_details}
 
@@ -77,7 +72,6 @@ This analysis utilizes a multi-stage correlation pipeline:
 - **Last Observed**: {last_seen}
 - **Total Correlated Sessions**: {evidence_count}
 
-## 4. Technical Metadata
 
 - **Target Flow Duration**: {duration}s
 - **Statistical Model Weight**: {stat_weight}
@@ -116,12 +110,10 @@ This analysis utilizes a multi-stage correlation pipeline:
         top_suspect = ranked[0]
         top_id = top_suspect.get('guard_identifier', top_suspect['flow_id'])
         
-        # Build Ranking Table
         table_rows = []
         for i, suspect in enumerate(ranked[:5]):
             sid = suspect.get('guard_identifier', suspect['flow_id'])
             
-            # Safe access to nested dicts
             relay_info = suspect.get('tor_relay_info') or {}
             role = relay_info.get('role', 'Unknown')
             
@@ -134,7 +126,6 @@ This analysis utilizes a multi-stage correlation pipeline:
             
         ranking_table = "\n".join(table_rows)
         
-        # Suspect Details
         top_relay_info = top_suspect.get('tor_relay_info')
         suspect_details = ""
         if top_relay_info:
@@ -145,7 +136,6 @@ This analysis utilizes a multi-stage correlation pipeline:
         
         top_evidence = top_suspect.get('aggregated_evidence') or {}
         
-        # Format Report
         report_content = self.REPORT_TEMPLATE.format(
             case_ref=case_ref,
             date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -164,7 +154,6 @@ This analysis utilizes a multi-stage correlation pipeline:
             timestamp=datetime.now().isoformat()
         )
         
-        # Save Report
         filename = f"report_{case_ref}_{target_flow_id}.md"
         file_path = self.output_dir / filename
         
@@ -175,7 +164,6 @@ This analysis utilizes a multi-stage correlation pipeline:
         return str(file_path)
 
 if __name__ == "__main__":
-    # Test
     gen = ForensicReportGenerator("reports")
     
     dummy_result = {

@@ -41,7 +41,7 @@ export default function CorrelationModeSwitch({ mode, onModeChange }) {
                                 }
               `}
                         >
-                            {/* Active Indicator */}
+                            {}
                             {isActive && (
                                 <div className={`absolute top-2 right-2 w-2 h-2 rounded-full bg-${m.color} animate-pulse`} />
                             )}
@@ -66,7 +66,7 @@ export default function CorrelationModeSwitch({ mode, onModeChange }) {
                 })}
             </div>
 
-            {/* Mode Info */}
+            {}
             <div className="mt-3 p-3 rounded-lg bg-ops-black border border-ops-border">
                 <p className="text-xs text-text-tertiary">
                     {mode === 'guard_only'

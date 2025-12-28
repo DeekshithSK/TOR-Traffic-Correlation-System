@@ -3,25 +3,16 @@ import {
     Target, Shield, Activity, Globe, TrendingUp, Server, MapPin, Wifi
 } from 'lucide-react';
 
-/**
- * Entry-Side PCAP Analysis Dashboard
- * Displays results when an entry-side (guard) PCAP is analyzed
- * 
- * Primary focus: Identified Guard Nodes
- */
 export default function EntrySideDashboard({ results, caseInfo }) {
-    // Use caseInfo.case_id for actual case identifier (e.g., CASE-1766468634)
     const actualCaseId = caseInfo?.case_id || 'CASE-UNKNOWN';
 
     const topFinding = results.top_finding || {};
     const correlation = results.correlation || {};
     const details = results.details || {};
 
-    // Get confidence scores for chart
     const confidenceScores = details.scores || [];
     const labels = details.labels || [];
 
-    // Get predicted exit nodes from consensus-based prediction
     const predictedExits = correlation.probable_exits || [];
 
     return (
@@ -30,7 +21,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
             animate={{ opacity: 1, y: 0 }}
             style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
-            {/* Header Banner */}
+            {}
             <div
                 className="panel"
                 style={{
@@ -124,10 +115,10 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                 </div>
             </div>
 
-            {/* Main Grid - 2 Columns */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
 
-                {/* LEFT: Identified Guard Nodes */}
+                {}
                 <div className="panel" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                         <Target style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
@@ -180,7 +171,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                                 </div>
                             ))}
 
-                            {/* Client Origin IP */}
+                            {}
                             {topFinding.origin_ip && (
                                 <div style={{
                                     marginTop: '0.5rem',
@@ -206,7 +197,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                         </div>
                     ) : topFinding.ip ? (
                         <div>
-                            {/* Single Top Finding Display */}
+                            {}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                                 <span style={{ fontSize: '2rem' }}>{topFinding.flag || '🌐'}</span>
                                 <div>
@@ -255,10 +246,10 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                     )}
                 </div>
 
-                {/* RIGHT: Session & Traffic Stats */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                    {/* Correlated Sessions */}
+                    {}
                     <div className="panel" style={{ padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <Activity style={{ width: '1rem', height: '1rem', color: '#3b82f6' }} />
@@ -273,7 +264,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                             <span style={{ fontSize: '0.875rem', color: '#9ca3af' }}>sessions matched</span>
                         </div>
 
-                        {/* Confidence Distribution */}
+                        {}
                         {confidenceScores.length > 1 && (
                             <div style={{ marginTop: '1rem' }}>
                                 <p style={{ fontSize: '0.625rem', color: '#6b7280', marginBottom: '0.5rem' }}>Score Distribution</p>
@@ -295,7 +286,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                         )}
                     </div>
 
-                    {/* Predicted Exit Nodes */}
+                    {}
                     <div className="panel" style={{ padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <Server style={{ width: '1rem', height: '1rem', color: '#8b5cf6' }} />
@@ -331,7 +322,7 @@ export default function EntrySideDashboard({ results, caseInfo }) {
                         )}
                     </div>
 
-                    {/* Analysis Summary */}
+                    {}
                     <div
                         className="panel"
                         style={{

@@ -91,7 +91,6 @@ class CorrelationAggregator:
         if not entry_ip:
             return
             
-        # For guard-only, use "none" as exit_ip
         exit_ip = exit_ip or "none"
             
         if timestamp is None:
@@ -122,7 +121,6 @@ class CorrelationAggregator:
         record['total_combined_confidence'] += float(combined_confidence)
         record['last_seen'] = timestamp
         
-        # Track mode distribution
         if mode == 'guard+exit_confirmed':
             record['confirmed_count'] += 1
         elif mode == 'guard+exit_indirect':
@@ -130,7 +128,6 @@ class CorrelationAggregator:
         else:
             record['guard_only_count'] += 1
         
-        # Keep limited timestamp history
         record['timestamps'].append(timestamp)
         if len(record['timestamps']) > 50:
             record['timestamps'] = record['timestamps'][-50:]
@@ -166,7 +163,6 @@ class CorrelationAggregator:
         avg_combined = record['total_combined_confidence'] / count
         confirm_ratio = record['confirmed_count'] / count
         
-        # Logarithmic boost + confirmation ratio bonus
         score = np.log1p(count) * avg_combined * (1 + confirm_ratio)
         return float(score)
 
@@ -213,7 +209,6 @@ class CorrelationAggregator:
             avg_combined = data['total_combined_confidence'] / count if count > 0 else 0
             confirm_ratio = data['confirmed_count'] / count if count > 0 else 0
             
-            # Score with logarithmic dampening and confirmation bonus
             score = np.log1p(count) * avg_combined * (1 + confirm_ratio)
             
             ranked.append({
@@ -245,12 +240,10 @@ class CorrelationAggregator:
 
 
 if __name__ == "__main__":
-    # Test code
     aggregator = CorrelationAggregator("data/test_correlation_evidence.json")
     aggregator.clear_evidence()
     
     print("Updating pair evidence...")
-    # Simulate multiple sessions
     aggregator.update_pair("34.54.84.110", "185.220.101.15", 0.95, 0.33, 0.85, "guard+exit_indirect")
     aggregator.update_pair("34.54.84.110", "185.220.101.15", 0.92, 0.45, 0.88, "guard+exit_indirect")
     aggregator.update_pair("34.54.84.110", "185.220.101.15", 0.98, 0.72, 0.95, "guard+exit_confirmed")
@@ -259,12 +252,10 @@ if __name__ == "__main__":
     ranked = aggregator.get_ranked_pairs()
     print(json.dumps(ranked, indent=2))
     
-    # Check the main pair
     assert ranked[0]['entry_ip'] == "34.54.84.110"
     assert ranked[0]['count'] == 3
     assert ranked[0]['confirmed_count'] == 1
     
-    # Test get_pair_score
     score = aggregator.get_pair_score("34.54.84.110", "185.220.101.15")
     print(f"Pair score: {score:.4f}")
     assert score > 0

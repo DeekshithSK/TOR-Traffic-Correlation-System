@@ -8,7 +8,6 @@ from typing import Dict, Tuple, List, Optional
 from scapy.all import rdpcap, IP, TCP, UDP
 import logging
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 def extract_flows_from_pcap(pcap_path: str, min_packets: int = 5) -> Dict[str, np.ndarray]:
@@ -49,7 +48,6 @@ def extract_flows_from_pcap(pcap_path: str, min_packets: int = 5) -> Dict[str, n
         timestamp = float(pkt.time)
         size = len(pkt)
         
-        # Determine Protocol and Ports
         if pkt.haslayer(TCP):
             proto = 'tcp'
             sport = pkt[TCP].sport
@@ -61,21 +59,9 @@ def extract_flows_from_pcap(pcap_path: str, min_packets: int = 5) -> Dict[str, n
         else:
             continue
             
-        # Canonical Flow ID (lexicographically sorted to handle bidirectional)
-        # We need to determine "Client" vs "Server" or just consistent direction.
-        # For the correlation pipeline, the "target flow" is usually Client -> Guard.
-        # Direction +1 is Outgoing (Client -> Network), -1 is Incoming (Network -> Client).
-        # We'll use a simple heuristic: The first packet defines the "Client" (Source).
         
-        # To handle bidirectional aggregation correctly, we key by the sorted tuple,
-        # but we also need to know which IP is "local" or "client".
-        # For this generic ingest, we'll create a flow ID based on the specific 5-tuple seen.
-        # If we see the reverse, we map it to the same ID but with reversed direction.
         
-        # Flow ID Generation: Originator (First Packet Src) -> Responder
-        # This ensures 'Outgoing' (+1) matches the Client's perspective if the capture starts with Client traffic.
         
-        # Check if reverse key exists first
         forward_key = f"{src_ip}:{sport}-{dst_ip}:{dport}-{proto}"
         reverse_key = f"{dst_ip}:{dport}-{src_ip}:{sport}-{proto}"
         
@@ -88,7 +74,6 @@ def extract_flows_from_pcap(pcap_path: str, min_packets: int = 5) -> Dict[str, n
             direction = -1 # Matches Responder -> Originator
             signed_size = -size
         else:
-            # New Flow: Assume current packet is Originator
             flow_key = forward_key
             flows_data[flow_key] = []
             direction = 1
@@ -99,20 +84,14 @@ def extract_flows_from_pcap(pcap_path: str, min_packets: int = 5) -> Dict[str, n
 
     logger.info(f"Parsed {count} packets into {len(flows_data)} raw flows.")
 
-    # Convert lists to NumPy arrays and filter
     valid_flows: Dict[str, np.ndarray] = {}
     
     for fid, pkt_list in flows_data.items():
         if len(pkt_list) < min_packets:
             continue
             
-        # Sort by timestamp
         pkt_list.sort(key=lambda x: x[0])
         
-        # Create NumPy array
-        # Shape (N, 3): [Size, Timestamp, Direction]
-        # Note: Previous requirement said Col 0 is Size, Col 1 is Timestamp.
-        # We will follow that.
         
         data = np.zeros((len(pkt_list), 3), dtype=np.float32)
         base_time = pkt_list[0][0]

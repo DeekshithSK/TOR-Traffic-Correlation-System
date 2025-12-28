@@ -6,19 +6,7 @@ import {
     AlertTriangle, Info, X, ChevronRight
 } from 'lucide-react';
 
-/**
- * RelayGraph - Police-friendly Tor path visualization
- * 
- * Displays a Sankey diagram showing:
- * - Client (Observed) → Guard (Inferred) → Tor Core (Hidden) → Exits (Probabilistic)
- * 
- * Edge types:
- * - Solid: Traffic-inferred connection
- * - Dashed: Inferred boundary
- * - Dotted: Probabilistic continuation
- */
 
-// Country flag lookup
 const COUNTRY_FLAGS = {
     'US': '🇺🇸', 'DE': '🇩🇪', 'NL': '🇳🇱', 'FR': '🇫🇷', 'GB': '🇬🇧',
     'CA': '🇨🇦', 'CH': '🇨🇭', 'SE': '🇸🇪', 'FI': '🇫🇮', 'RO': '🇷🇴',
@@ -54,7 +42,6 @@ export default function RelayGraph({
 
     const { graph, guard, exit_candidates = [], metadata = {} } = pathData;
 
-    // Build Sankey diagram data
     const buildSankeyData = () => {
         const nodeLabels = ['Client\n(Observed)', `Guard Relay\n${guard?.ip || 'Unknown'}`, 'Tor Network\n(Hidden)',];
         const nodeColors = [
@@ -63,35 +50,29 @@ export default function RelayGraph({
             'rgba(148, 163, 184, 0.5)', // Tor Core - gray dashed
         ];
 
-        // Add exit nodes (top 5)
         const topExits = exit_candidates.slice(0, 5);
         topExits.forEach((exit, i) => {
             const prob = (exit.probability * 100).toFixed(1);
             nodeLabels.push(`Exit ${i + 1}\n${exit.ip || 'Unknown'}\n(${prob}%)`);
-            // Opacity based on probability
             const opacity = Math.max(0.3, Math.min(0.9, exit.probability * 3));
             nodeColors.push(`rgba(251, 191, 36, ${opacity})`); // Amber
         });
 
-        // Source-target links
         const source = [];
         const target = [];
         const value = [];
         const linkColors = [];
 
-        // Client -> Guard (solid, high value)
         source.push(0);
         target.push(1);
         value.push(100);
         linkColors.push('rgba(34, 211, 238, 0.6)'); // Cyan
 
-        // Guard -> Tor Core (dashed)
         source.push(1);
         target.push(2);
         value.push(100);
         linkColors.push('rgba(148, 163, 184, 0.4)'); // Gray
 
-        // Tor Core -> Exits (dotted, probability-weighted)
         topExits.forEach((exit, i) => {
             source.push(2);
             target.push(3 + i);
@@ -126,7 +107,6 @@ export default function RelayGraph({
         if (data.points && data.points[0]) {
             const pointIndex = data.points[0].pointNumber;
             if (pointIndex >= 3) {
-                // Exit node clicked
                 const exitIndex = pointIndex - 3;
                 if (exit_candidates[exitIndex]) {
                     setSelectedNode(exit_candidates[exitIndex]);
@@ -138,7 +118,7 @@ export default function RelayGraph({
 
     return (
         <div className="w-full space-y-4">
-            {/* Header */}
+            {}
             <div className="p-4 rounded-xl bg-ops-panel border border-ops-border">
                 <div className="flex items-center justify-between mb-4">
                     <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
@@ -152,7 +132,7 @@ export default function RelayGraph({
                     </div>
                 </div>
 
-                {/* Warning Banner */}
+                {}
                 <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div className="text-xs text-amber-200">
@@ -162,7 +142,7 @@ export default function RelayGraph({
                     </div>
                 </div>
 
-                {/* Sankey Diagram */}
+                {}
                 <div className="bg-ops-bg rounded-lg p-2 border border-ops-border">
                     <Plot
                         data={[{
@@ -191,7 +171,7 @@ export default function RelayGraph({
                 </div>
             </div>
 
-            {/* Legend */}
+            {}
             <div className="p-4 rounded-xl bg-ops-panel border border-ops-border">
                 <h5 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-3">
                     Path Legend
@@ -215,7 +195,7 @@ export default function RelayGraph({
                     </div>
                 </div>
 
-                {/* Edge Legend */}
+                {}
                 <div className="mt-4 pt-4 border-t border-ops-border grid grid-cols-3 gap-4 text-xs">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-0.5 bg-cyan-400" />
@@ -232,9 +212,9 @@ export default function RelayGraph({
                 </div>
             </div>
 
-            {/* Node Details Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Guard Node Card */}
+                {}
                 <div className="p-4 rounded-xl bg-ops-panel border-2 border-ops-cyan shadow-glow-cyan">
                     <div className="flex items-center gap-2 mb-3">
                         <Server className="w-5 h-5 text-ops-cyan" />
@@ -270,7 +250,7 @@ export default function RelayGraph({
 
 
 
-                {/* Top Exit Card */}
+                {}
                 {exit_candidates.length > 0 && (
                     <div className="p-4 rounded-xl bg-ops-panel border border-amber-500/50">
                         <div className="flex items-center gap-2 mb-3">
@@ -306,7 +286,7 @@ export default function RelayGraph({
                 )}
             </div>
 
-            {/* Exit Details Modal */}
+            {}
             <AnimatePresence>
                 {showModal && selectedNode && (
                     <motion.div
@@ -336,13 +316,13 @@ export default function RelayGraph({
                                 </button>
                             </div>
 
-                            {/* Warning */}
+                            {}
                             <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200">
                                 <AlertTriangle className="w-4 h-4 inline mr-2" />
                                 These are <strong>probabilistic estimates</strong> based on Tor's bandwidth-weighted selection algorithm.
                             </div>
 
-                            {/* Exit Candidates Table */}
+                            {}
                             <div className="overflow-hidden rounded-lg border border-ops-border">
                                 <table className="w-full text-xs">
                                     <thead className="bg-ops-bg">
@@ -377,7 +357,7 @@ export default function RelayGraph({
                                 </table>
                             </div>
 
-                            {/* Metadata */}
+                            {}
                             <div className="mt-4 pt-4 border-t border-ops-border text-xs text-text-tertiary">
                                 <div className="flex justify-between">
                                     <span>Sample Count: {metadata?.sample_count || 'N/A'}</span>

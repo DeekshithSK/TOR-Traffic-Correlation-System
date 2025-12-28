@@ -10,7 +10,6 @@ import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Case number counter file path
 CASE_COUNTER_FILE = Path("data/report_counter.json")
 CASE_NUMBER_START = 70001
 
@@ -25,7 +24,6 @@ def _get_next_case_number():
         else:
             next_num = CASE_NUMBER_START
         
-        # Increment and save
         with open(CASE_COUNTER_FILE, 'w') as f:
             json.dump({'next_number': next_num + 1}, f)
         
@@ -44,7 +42,6 @@ def _check_reportlab():
 
 def _get_country_flag_text(flag_emoji, country):
     """Convert flag emoji to ISO country code for PDF compatibility."""
-    # Common flag emoji to ISO code mapping
     flag_to_iso = {
         '🇫🇷': 'FR', '🇩🇪': 'DE', '🇬🇧': 'GB', '🇺🇸': 'US', '🇳🇱': 'NL',
         '🇸🇪': 'SE', '🇨🇭': 'CH', '🇦🇹': 'AT', '🇧🇪': 'BE', '🇮🇹': 'IT',
@@ -94,14 +91,12 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
-    # Generate unique report number
     report_number = _get_next_case_number()
     
     if not filename:
         filename = f"{case_id}.pdf"
     output_path = os.path.abspath(filename)
     
-    # Create PDF document
     doc = SimpleDocTemplate(
         output_path,
         pagesize=A4,
@@ -111,7 +106,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
         bottomMargin=20*mm
     )
     
-    # Custom styles
     styles = getSampleStyleSheet()
     
     title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, 
@@ -130,11 +124,9 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story = []
     
-    # Header
     story.append(Paragraph("TOR Traffic Correlation &amp; Probable Origin Analysis", title_style))
     story.append(Paragraph("ENTRY-SIDE PCAP ANALYSIS REPORT", subtitle_style))
     
-    # Case Info Table
     top_finding = results.get('top_finding', {})
     correlation = results.get('correlation', {})
     
@@ -161,7 +153,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(case_table)
     story.append(Spacer(1, 15))
     
-    # Section 1: Primary Finding - Identified Guard Node
     story.append(Paragraph("1. PRIMARY FINDING: IDENTIFIED GUARD NODE", section_style))
     
     guard_ip = top_finding.get('ip', 'N/A')
@@ -180,7 +171,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
             ['Correlated Sessions:', str(top_finding.get('correlated_sessions', 'N/A'))],
         ]
         
-        # Add Inferred Client Network Identifier if available
         origin_ip = top_finding.get('origin_ip')
         if origin_ip:
             guard_data.append(['Inferred Client Network Identifier:', origin_ip])
@@ -203,7 +193,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 2: Predicted Exit Nodes
     story.append(Paragraph("2. PREDICTED EXIT NODES (From Tor Consensus)", section_style))
     
     probable_exits = correlation.get('probable_exits', []) or results.get('probable_exit_nodes', [])
@@ -238,7 +227,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 3: Analysis Metrics
     story.append(Paragraph("3. ANALYSIS METRICS", section_style))
     
     details = results.get('details', {})
@@ -264,7 +252,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(metrics_table)
     story.append(Spacer(1, 15))
     
-    # Section 4: Correlation Method
     story.append(Paragraph("4. CORRELATION METHOD", section_style))
     method_data = [
         ['Technique', 'Description'],
@@ -288,7 +275,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(method_table)
     story.append(Spacer(1, 15))
     
-    # Section 5: Forensic Notice
     story.append(Paragraph("5. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides investigative intelligence based on traffic correlation analysis. "
@@ -297,7 +283,6 @@ def generate_entry_side_report(results, case_id, pcap_hash=None, filename=None):
         body_style
     ))
     
-    # Footer
     story.append(Spacer(1, 30))
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
                                    textColor=HexColor('#666666'), alignment=TA_CENTER)
@@ -329,7 +314,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
-    # Generate unique report number
     report_number = _get_next_case_number()
     
     if not filename:
@@ -353,14 +337,12 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story = []
     
-    # Header
     story.append(Paragraph("TOR Traffic Correlation &amp; Probable Origin Analysis", title_style))
     story.append(Paragraph("EXIT-SIDE PCAP ANALYSIS REPORT", subtitle_style))
     
     correlation = results.get('correlation', {})
     flow_metadata = results.get('flow_metadata', {})
     
-    # Case Info
     case_data = [
         ['Report Number:', str(report_number)],
         ['Case ID:', case_id],
@@ -382,7 +364,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(case_table)
     story.append(Spacer(1, 15))
     
-    # Section 1: Detected Exit Nodes
     story.append(Paragraph("1. VERIFIED TOR EXIT NODES DETECTED", section_style))
     
     top_exit_nodes = correlation.get('top_exit_nodes', [])
@@ -417,7 +398,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 2: Probable Guard Nodes
     story.append(Paragraph("2. PROBABLE GUARD NODES (Inferred from Exit Traffic)", section_style))
     
     probable_guards = correlation.get('probable_guards', [])
@@ -450,7 +430,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 3: Flow Fingerprint
     story.append(Paragraph("3. FLOW FINGERPRINT ANALYSIS", section_style))
     
     fingerprint = flow_metadata.get('fingerprint', {})
@@ -480,7 +459,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 4: Traffic Profile
     story.append(Paragraph("4. TRAFFIC PROFILE", section_style))
     
     traffic_data = [
@@ -505,7 +483,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(traffic_table)
     story.append(Spacer(1, 15))
     
-    # Section 5: Correlation Method
     story.append(Paragraph("5. CORRELATION METHOD", section_style))
     method_data = [
         ['Technique', 'Description'],
@@ -529,7 +506,6 @@ def generate_exit_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(method_table)
     story.append(Spacer(1, 15))
     
-    # Section 6: Forensic Notice
     story.append(Paragraph("6. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides investigative intelligence based on exit-side traffic analysis. "
@@ -568,7 +544,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
-    # Generate unique report number
     report_number = _get_next_case_number()
     
     if not filename:
@@ -592,7 +567,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story = []
     
-    # Header
     story.append(Paragraph("TOR Traffic Correlation &amp; Probable Origin Analysis", title_style))
     story.append(Paragraph("DUAL-SIDE PCAP CORRELATION REPORT", subtitle_style))
     
@@ -600,7 +574,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     correlation = results.get('correlation', {})
     details = results.get('details', {})
     
-    # Case Info
     case_data = [
         ['Report Number:', str(report_number)],
         ['Case ID:', case_id],
@@ -622,7 +595,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(case_table)
     story.append(Spacer(1, 15))
     
-    # Section 1: Analysis Metrics Summary
     story.append(Paragraph("1. ANALYSIS METRICS SUMMARY", section_style))
     
     guard_exit_pairs = correlation.get('guard_exit_pairs', [])
@@ -651,7 +623,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(metrics_table)
     story.append(Spacer(1, 15))
     
-    # Section 2: Top Probable Connections
     story.append(Paragraph("2. TOP PROBABLE CONNECTIONS ESTABLISHED (>90% Confidence)", section_style))
     
     if guard_exit_pairs:
@@ -683,7 +654,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 3: Primary Finding
     story.append(Paragraph("3. PRIMARY FINDING: BEST MATCH", section_style))
     
     guard_ip = top_finding.get('ip', 'N/A')
@@ -715,7 +685,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 4: Exit Nodes Detected
     story.append(Paragraph("4. EXIT NODES DETECTED IN CORRELATION", section_style))
     
     if top_exit_nodes:
@@ -746,7 +715,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     
     story.append(Spacer(1, 15))
     
-    # Section 5: Correlation Method
     story.append(Paragraph("5. CORRELATION METHOD", section_style))
     method_data = [
         ['Technique', 'Description'],
@@ -770,7 +738,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     story.append(method_table)
     story.append(Spacer(1, 15))
     
-    # Section 6: Forensic Notice
     story.append(Paragraph("6. FORENSIC NOTICE", section_style))
     story.append(Paragraph(
         "This report provides the highest confidence correlation from dual-side PCAP analysis. "
@@ -792,7 +759,6 @@ def generate_dual_side_report(results, case_id, pcap_hash=None, filename=None):
     return output_path
 
 
-# Markdown fallback functions
 def generate_entry_side_markdown(results, case_id, pcap_hash=None, filename=None):
     """Fallback markdown report for entry-side analysis."""
     if not filename:
@@ -803,7 +769,6 @@ def generate_entry_side_markdown(results, case_id, pcap_hash=None, filename=None
     correlation = results.get('correlation', {})
     
     content = f"""# TOR Traffic Correlation & Probable Origin Analysis
-## ENTRY-SIDE PCAP ANALYSIS REPORT
 
 | Field | Value |
 |-------|-------|
@@ -812,7 +777,6 @@ def generate_entry_side_markdown(results, case_id, pcap_hash=None, filename=None
 | Investigating Unit | Tamil Nadu Police 2025 |
 | PCAP Hash | {pcap_hash[:32] + '...' if pcap_hash else 'N/A'} |
 
-## 1. Primary Finding: Inferred Guard Node
 
 - **Guard Node IP:** {top_finding.get('ip', 'N/A')}
 - **Country:** {top_finding.get('flag', '')} {top_finding.get('country', 'Unknown')}
